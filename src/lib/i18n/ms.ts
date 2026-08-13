@@ -300,9 +300,9 @@ export const ms: Dictionary = {
   auth: {
     joinTitle: "Sertai SPM Games 2026",
     joinSub:
-      "Percuma, terbuka kepada semua pelajar SPM di Malaysia. Log masuk dengan nombor telefon untuk mula bermain.",
+      "Percuma, terbuka kepada semua pelajar SPM di Malaysia. Log masuk dengan e-mel untuk mula bermain.",
     privacyNote:
-      "Kami guna nombor telefon anda untuk log masuk dan memastikan pertandingan ini adil dengan menghalang akaun berganda. Ia tidak sekali-kali dipaparkan pada mana-mana ranking.",
+      "E-mel anda digunakan untuk log masuk. Nombor telefon diminta kemudian, semata-mata untuk memastikan pertandingan adil dengan menghalang akaun berganda. Kedua-duanya tidak pernah dipaparkan pada ranking.",
     mobileNumber: "Nombor telefon bimbit",
     mobileHint: "Kami akan hantar kod 6 digit melalui SMS.",
     sendCode: "Hantar kod",

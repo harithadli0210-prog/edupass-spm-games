@@ -51,7 +51,7 @@ export default async function OnboardingPage({
       ]);
 
   return (
-    <div className="mx-auto flex max-w-md flex-col gap-6 pt-2">
+    <div className="flex flex-col gap-6">
       <header>
         <h1 className="font-display text-2xl font-bold text-ink">
           {dict.onboarding.title}

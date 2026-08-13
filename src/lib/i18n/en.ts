@@ -289,9 +289,9 @@ export const en = {
   auth: {
     joinTitle: "Join SPM Games 2026",
     joinSub:
-      "Free to enter, open to every SPM student in Malaysia. Sign in with your phone number to start playing.",
+      "Free to enter, open to every SPM student in Malaysia. Sign in with your email to start playing.",
     privacyNote:
-      "We use your phone number to sign you in and to keep the competition fair by preventing duplicate accounts. It is never shown on any leaderboard.",
+      "Your email signs you in. We ask for a phone number later, only to keep the competition fair by preventing duplicate accounts. Neither is ever shown on a leaderboard.",
     mobileNumber: "Mobile number",
     mobileHint: "We'll text you a 6-digit code.",
     sendCode: "Send code",
