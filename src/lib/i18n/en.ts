@@ -308,6 +308,9 @@ export const en = {
     useEmail: "Use email instead",
     badEmail: "Enter a valid email address.",
     orDivider: "or",
+    orClickLink:
+      "No code in the email? Click the link in it instead — that signs you in too.",
+    linkExpired: "That link has expired. Ask for a new one.",
   },
 
   onboarding: {

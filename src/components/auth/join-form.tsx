@@ -77,7 +77,12 @@ export function JoinForm({
       setBusy(true);
       const { error: otpError } = await supabaseBrowser().auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          // Supabase's default template sends a link and cannot be edited
+          // without custom SMTP, so the link has to land somewhere that works.
+          emailRedirectTo: `${window.location.origin}${appPath(lang, "/callback")}?next=${encodeURIComponent(next)}`,
+        },
       });
       setBusy(false);
       if (otpError) return setError(otpError.message);
@@ -134,6 +139,12 @@ export function JoinForm({
         <Button type="submit" fullWidth loading={busy} disabled={code.length < 4}>
           {dict.auth.verifyContinue}
         </Button>
+
+        {method === "email" && (
+          <p className="text-center text-xs leading-relaxed text-muted">
+            {dict.auth.orClickLink}
+          </p>
+        )}
 
         <button
           type="button"

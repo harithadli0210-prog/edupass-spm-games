@@ -319,6 +319,9 @@ export const ms: Dictionary = {
     useEmail: "Guna e-mel",
     badEmail: "Masukkan alamat e-mel yang sah.",
     orDivider: "atau",
+    orClickLink:
+      "Tiada kod dalam e-mel? Klik pautan di dalamnya — itu pun boleh log masuk.",
+    linkExpired: "Pautan itu telah tamat tempoh. Minta yang baharu.",
   },
 
   onboarding: {
