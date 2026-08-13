@@ -322,6 +322,14 @@ export const ms: Dictionary = {
     orClickLink:
       "Tiada kod dalam e-mel? Klik pautan di dalamnya — itu pun boleh log masuk.",
     linkExpired: "Pautan itu telah tamat tempoh. Minta yang baharu.",
+    checkInbox: "Semak e-mel anda",
+    checkInboxBody:
+      "Kami hantar pautan log masuk ke {email}. Buka pautan itu pada peranti ini dan anda terus masuk.",
+    checkInboxHint:
+      "Tiada apa-apa selepas seminit? Cuba lihat dalam spam, atau hantar semula.",
+    sendAgain: "Hantar semula",
+    sentAgain: "Dihantar. Semak e-mel anda.",
+    useAnotherEmail: "Guna e-mel lain",
   },
 
   onboarding: {

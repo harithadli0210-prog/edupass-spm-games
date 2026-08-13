@@ -54,6 +54,14 @@ insert into feature_flags (key, label, description, category, enabled, visible_t
    'No external provider needed. Weaker duplicate-account guard than phone.',
    'COMPETITION', true, true, 6),
 
+  -- Off until custom SMTP is configured AND the email template carries
+  -- {{ .Token }}. Supabase locks templates behind SMTP, so on a fresh project
+  -- the email contains a link and no code — and a code field would be asking
+  -- for something that never arrives.
+  (''auth.email_code'', ''Six-digit code in email'',
+   ''Requires custom SMTP and {{ .Token }} in the email template. Off means students sign in by clicking the link.'',
+   ''COMPETITION'', false, true, 7),
+
   -- ---- Content -----------------------------------------------------------
   ('content.explanations', 'Answer explanations',
    'Shows the explanation after a wrong answer.',

@@ -100,6 +100,7 @@ const DEFAULT_FLAGS = [
   { key: "mode.boss", label: "Weekly Boss Battle", description: "Weekly 20-question event. Under construction.", category: "MODE" as const, enabled: false, visible_to_admin: true, sort_order: 4 },
   { key: "auth.phone", label: "Sign in by phone (SMS)", description: "Needs an SMS provider. Each message is billed.", category: "COMPETITION" as const, enabled: false, visible_to_admin: true, sort_order: 5 },
   { key: "auth.email", label: "Sign in by email", description: "No external provider needed.", category: "COMPETITION" as const, enabled: true, visible_to_admin: true, sort_order: 6 },
+  { key: "auth.email_code", label: "Six-digit code in email", description: "Requires custom SMTP and a token in the template.", category: "COMPETITION" as const, enabled: false, visible_to_admin: true, sort_order: 7 },
   { key: "competition.registration", label: "Student registration", description: "Allows new students to sign up.", category: "COMPETITION" as const, enabled: true, visible_to_admin: true, sort_order: 10 },
   { key: "competition.leaderboard", label: "Leaderboards", description: "Public ranking pages.", category: "COMPETITION" as const, enabled: true, visible_to_admin: true, sort_order: 11 },
   { key: "competition.prizes", label: "Prize showcase", description: "Prize values on the dashboard and prizes page.", category: "COMPETITION" as const, enabled: true, visible_to_admin: true, sort_order: 12 },

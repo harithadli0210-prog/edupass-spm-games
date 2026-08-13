@@ -17,7 +17,7 @@ export default async function JoinPage({
 
   // Phone stays hidden until an SMS provider exists, so a student is never
   // offered a sign-in route that cannot deliver a code.
-  const flags = await resolveFlags(["auth.phone", "auth.email"]);
+  const flags = await resolveFlags(["auth.phone", "auth.email", "auth.email_code"]);
   const enabled = {
     phone: flags["auth.phone"],
     email: flags["auth.email"] || !flags["auth.phone"],
@@ -36,7 +36,11 @@ export default async function JoinPage({
       {/* JoinForm reads the `next` query param, so it needs a boundary to be
           prerenderable. */}
       <Suspense fallback={<Skeleton className="h-[168px] rounded-md" />}>
-        <JoinForm dict={dict} enabled={enabled} />
+        <JoinForm
+          dict={dict}
+          enabled={enabled}
+          emailCodeSupported={flags["auth.email_code"]}
+        />
       </Suspense>
 
       <p className="text-center text-xs leading-relaxed text-muted">

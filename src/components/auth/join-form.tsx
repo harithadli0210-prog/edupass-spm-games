@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Mail, Smartphone } from "lucide-react";
+import { ArrowLeft, MailCheck, Mail, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { supabaseBrowser } from "@/lib/supabase/client";
@@ -36,9 +36,16 @@ type Method = "phone" | "email";
 export function JoinForm({
   dict,
   enabled = { phone: true, email: true },
+  emailCodeSupported = false,
 }: {
   dict: Dictionary;
   enabled?: { phone: boolean; email: boolean };
+  /**
+   * True only when custom SMTP is configured and the email template carries
+   * {{ .Token }}. Until then Supabase sends a link and no code exists, so
+   * asking for one is asking for something that will never arrive.
+   */
+  emailCodeSupported?: boolean;
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -47,7 +54,8 @@ export function JoinForm({
 
   const both = enabled.phone && enabled.email;
   const [method, setMethod] = useState<Method>(enabled.phone ? "phone" : "email");
-  const [step, setStep] = useState<"identify" | "code">("identify");
+  const [step, setStep] = useState<"identify" | "code" | "sent">("identify");
+  const [resent, setResent] = useState(false);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -88,7 +96,9 @@ export function JoinForm({
       if (otpError) return setError(otpError.message);
     }
 
-    setStep("code");
+    // With no code in the email, the only honest next screen is "go and open
+    // the link" — not a box for a code that does not exist.
+    setStep(method === "email" && !emailCodeSupported ? "sent" : "code");
   };
 
   const verify = async (event: React.FormEvent) => {
@@ -109,7 +119,60 @@ export function JoinForm({
     router.refresh();
   };
 
-  /* ---- Step 2: the code ------------------------------------------------- */
+  /* ---- Step 2a: link sent, nothing to type ------------------------------ */
+  if (step === "sent") {
+    return (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <span className="inline-flex size-14 items-center justify-center rounded-lg bg-success-bg text-success">
+          <MailCheck size={28} strokeWidth={2} />
+        </span>
+
+        <div>
+          <h2 className="font-display text-lg font-bold text-ink">
+            {dict.auth.checkInbox}
+          </h2>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">
+            {t(dict.auth.checkInboxBody, { email })}
+          </p>
+        </div>
+
+        <p className="text-xs leading-relaxed text-muted">
+          {dict.auth.checkInboxHint}
+        </p>
+
+        {error && (
+          <p className="text-xs font-semibold text-danger-ink">{error}</p>
+        )}
+
+        <Button
+          variant="outline"
+          fullWidth
+          loading={busy}
+          onClick={(e) => {
+            setResent(true);
+            void sendCode(e as unknown as React.FormEvent);
+          }}
+        >
+          {resent && !busy ? dict.auth.sentAgain : dict.auth.sendAgain}
+        </Button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setStep("identify");
+            setResent(false);
+            setError(null);
+          }}
+          className="flex items-center justify-center gap-1.5 text-sm font-semibold text-muted hover:text-brand-500"
+        >
+          <ArrowLeft size={16} strokeWidth={2} />
+          {dict.auth.useAnotherEmail}
+        </button>
+      </div>
+    );
+  }
+
+  /* ---- Step 2b: the code ------------------------------------------------ */
   if (step === "code") {
     return (
       <form onSubmit={verify} className="flex flex-col gap-4">

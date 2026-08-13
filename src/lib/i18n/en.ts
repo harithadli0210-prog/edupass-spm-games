@@ -311,6 +311,14 @@ export const en = {
     orClickLink:
       "No code in the email? Click the link in it instead — that signs you in too.",
     linkExpired: "That link has expired. Ask for a new one.",
+    checkInbox: "Check your inbox",
+    checkInboxBody:
+      "We sent a sign-in link to {email}. Open it on this device and you are in.",
+    checkInboxHint:
+      "Nothing after a minute? Look in spam, or send it again.",
+    sendAgain: "Send it again",
+    sentAgain: "Sent. Check your inbox.",
+    useAnotherEmail: "Use a different email",
   },
 
   onboarding: {
