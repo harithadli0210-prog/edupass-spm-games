@@ -13,8 +13,28 @@ the same product, not a separate one.
 ```bash
 npm install
 cp .env.example .env.local     # fill in your Supabase project values
+npm run db:migrate -- --seed   # create the schema and seed it
+npm run db:check               # verify
 npm run dev
 ```
+
+### Scripts
+
+| Command | Does |
+|---|---|
+| `npm run db:migrate -- --dry` | List the SQL files that would run |
+| `npm run db:migrate` | Apply `supabase/migrations/` in order |
+| `npm run db:migrate -- --seed` | Migrations, then `supabase/seed/` |
+| `npm run db:check` | Connection, schema, seed and readiness report — never prints a key |
+| `npm run questions:check` | Validate question batches without writing |
+| `npm run questions:import` | Load them |
+| `npm run typecheck` / `lint` | The usual |
+
+`db:migrate` records what ran in a `_migrations` table, so re-running is safe.
+Each file applies inside a transaction: a failure rolls that file back whole
+rather than leaving the schema half-built. It needs `DATABASE_URL` in
+`.env.local` — use the **Session pooler** string from Supabase, not the direct
+`db.*.supabase.co` host, which is IPv6-only on most projects.
 
 ### Preview mode — no database needed
 
@@ -51,18 +71,22 @@ a fixture student.
 Run in order against your Supabase project:
 
 ```
-supabase/migrations/0001_schema.sql        tables, indexes, constraints
+supabase/migrations/0001_schema.sql        tables, indexes, constraints, feature flags
 supabase/migrations/0002_rls.sql           row level security
 supabase/migrations/0003_leaderboards.sql  materialised views + read RPCs
 supabase/migrations/0004_engines.sql       scoring writes + difficulty engine
 supabase/migrations/0005_functions.sql     school matching, behaviour signals
+supabase/migrations/0006_prizes.sql        award_prizes
 
 supabase/seed/0001_reference.sql           season, states, districts, subjects, topics, levels
 supabase/seed/0002_config.sql              scoring, difficulty, selection, modes, awards
 supabase/seed/0003_demo_questions.sql      25 demo questions + daily challenge scheduler
+supabase/seed/0004_prizes.sql              PLACEHOLDER prize values — replace before launch
+supabase/seed/0005_flags.sql               feature switches
 ```
 
 Then enable **Phone** auth in the Supabase dashboard and connect an SMS provider.
+Supabase's test phone numbers work without a paid SMS provider while building.
 
 ### Scheduled jobs
 
@@ -72,12 +96,19 @@ Three jobs need to run. `pg_cron` is the simplest option:
 -- Open the day's Daily Challenges, just after midnight MYT (16:05 UTC)
 select cron.schedule('open-daily', '5 16 * * *', $$select open_daily_challenges()$$);
 
--- Refresh every leaderboard
-select cron.schedule('refresh-lb', '*/5 * * * *', $$select refresh_leaderboards()$$);
+-- Fast boards: one row per student, cheap.
+select cron.schedule('lb-fast', '*/5 * * * *', $$select refresh_leaderboards_fast()$$);
 
--- Recalculate question difficulty and behaviour signals, nightly
+-- Most Improved aggregates the WHOLE attempts table. Nightly, never per-minute.
+select cron.schedule('lb-slow', '40 18 * * *', $$select refresh_leaderboards_slow()$$);
+
+-- Difficulty, behaviour signals, topic rollups.
 select cron.schedule('difficulty', '15 19 * * *', $$select recompute_question_difficulty()$$);
 select cron.schedule('signals',    '30 19 * * *', $$select recompute_behaviour_signals()$$);
+select cron.schedule('topics',     '45 19 * * *', $$select recompute_topic_stats()$$);
+
+-- Keep monthly attempt partitions ahead of the calendar.
+select cron.schedule('partitions', '0 3 1 * *', $$select ensure_attempt_partitions(current_date, 6)$$);
 ```
 
 Without `open-daily`, Daily Challenges stay `SCHEDULED` and nobody can play them.
@@ -90,12 +121,19 @@ Without `open-daily`, Daily Challenges stay `SCHEDULED` and nobody can play them
 |---|---|
 | Daily Challenge | Live |
 | Speedy Challenge | Live |
-| Subject Missions | Schema and scoring exist; `mode_configs.enabled = false` |
-| Weekly Boss | Schema and scoring exist; `mode_configs.enabled = false` |
+| Subject Missions | Schema and scoring exist; flag `mode.mission` off |
+| Weekly Boss | Schema and scoring exist; flag `mode.boss` off |
 
-Missions and Boss are switched on by flipping `enabled` in `mode_configs` and
-populating their question sets. No migration is needed against live competition
-data.
+Availability lives in `feature_flags`, managed at **`/{lang}/admin/flags`**. Each
+feature has two switches:
+
+- **Live** — students see it
+- **Admin** — you can still reach it while Live is off
+
+Live off + Admin on is the working state for anything under construction: it
+runs on the real site, against real data, and no student can see it. Turning
+Missions or Boss on is a switch and a question set, never a migration against
+live competition data.
 
 ---
 
@@ -122,8 +160,11 @@ qualification gates all live in `scoring_rules`, `difficulty_config`,
 `selection_profiles`, `level_thresholds`, `mode_configs` and
 `award_definitions`. Config is cached in-process for 60 seconds.
 
-Each session freezes the rules onto `game_sessions.config_snapshot` at start, so
-changing a weight mid-season never retroactively rewrites a finished game.
+Each session pins `game_sessions.scoring_rules_id` at start, so changing a
+weight mid-season never retroactively rewrites a finished game. A foreign key
+rather than a JSON copy: `scoring_rules` rows are versioned and never updated in
+place, so the id is as immutable as a snapshot would be, at 16 bytes instead of
+~800 across millions of rows.
 
 ### Overall score is an index, not a sum
 
@@ -187,13 +228,40 @@ an unmeasured tail.
 postcode. Leaderboards join `students` only — `student_profiles` is not in any
 board's query graph, so a leaderboard query *cannot* leak a phone number.
 
+### Bilingual by construction
+
+Routes are `/{lang}/spm-games-2026/*`, mirroring edupass.my so the app slots in
+behind a Cloudflare route with no basePath and no link rewriting. `[lang]` is the
+root layout, so `<html lang>` reflects the page's actual language.
+
+`src/lib/i18n/en.ts` defines the dictionary shape and `ms.ts` must satisfy it —
+a missing Malay string is a build error, not an English word appearing mid
+sentence. Subject names come from `subjects.name_en` / `name_ms`, so they
+localise from the database rather than a hard-coded map.
+
+### Storage shape
+
+`question_attempts` is partitioned by month. It is the only table that reaches
+tens of millions of rows, and partitioning makes end-of-season archival a
+`DROP TABLE` rather than a delete across 20 million rows.
+
+Indexes are kept deliberately few — at ~600 bytes a row, indexes cost more than
+the data, so each one has to earn its place against a query that actually runs.
+There is no analytics event per question: `question_attempts` already records
+everything, and a parallel row would duplicate the largest table in the database
+for no information gain.
+
 ---
 
 ## Outstanding before launch
 
 - [ ] **Question bank.** 25 demo questions ship here. Daily + Speedy across five
-      subjects needs 125 at an absolute minimum; 250+ is comfortable. This is
-      the critical path.
+      subjects needs 125 at an absolute minimum; 150+ per subject is where the
+      difficulty engine behaves as designed. This is the critical path — see
+      `content/questions/README.md`.
+- [ ] **Prize values are invented.** Everything in `supabase/seed/0004_prizes.sql`
+      is placeholder copy. Replace it, or switch `competition.prizes` off, before
+      anyone sees the site.
 - [ ] **Privacy notice.** The consent checkbox is wired; the notice it refers to
       does not exist yet. Participants are minors.
 - [ ] **MOE school registry.** Seeding it moves most students onto an exact
