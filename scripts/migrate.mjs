@@ -65,6 +65,19 @@ async function main() {
     process.exit(1);
   }
 
+  // A template that was copied but never filled in produces a baffling
+  // "password authentication failed" three steps later. Catch it here instead.
+  const placeholder = /PASTE_PASSWORD_HERE|\[YOUR-PASSWORD\]|PASSWORD_KAU|<password>/i;
+  if (placeholder.test(url)) {
+    console.error(
+      "\n✗ DATABASE_URL still contains a placeholder.\n\n" +
+        "  Open .env.local and replace it with your actual database password:\n" +
+        "  Supabase → Project Settings → Database → Reset database password\n\n" +
+        "  If the password contains @ : / ? # or %, percent-encode it.\n",
+    );
+    process.exit(1);
+  }
+
   const migrations = await filesIn("supabase/migrations");
   const seeds = withSeed ? await filesIn("supabase/seed") : [];
   const planned = [...migrations, ...seeds];

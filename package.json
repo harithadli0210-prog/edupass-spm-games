@@ -12,7 +12,8 @@
     "questions:import": "node scripts/import-questions.mjs",
     "db:check": "node scripts/check-db.mjs",
     "db:migrate": "node scripts/migrate.mjs",
-    "db:reset": "node scripts/migrate.mjs --seed --force"
+    "db:reset": "node scripts/migrate.mjs --seed --force",
+    "db:security": "node scripts/check-rls.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",

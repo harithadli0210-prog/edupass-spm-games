@@ -50,6 +50,7 @@ alter table selection_profiles         enable row level security;
 alter table mode_configs               enable row level security;
 alter table analytics_events           enable row level security;
 alter table suspicion_flags            enable row level security;
+alter table feature_flags              enable row level security;
 
 -- ----------------------------------------------------------------------------
 -- Admin check.
@@ -197,6 +198,14 @@ create policy admin_flags         on suspicion_flags      for all using (is_admi
 -- ============================================================================
 -- Configuration — admin only. Students never see the scoring formula.
 -- ============================================================================
+
+-- Feature flags: admin only, with no student policy at all.
+--
+-- The app reads flags through the service role, so students never need direct
+-- access. Left unprotected, anyone holding the publishable key could WRITE
+-- here — switching scoring off, opening an unfinished mode, or closing
+-- registration mid-campaign.
+create policy admin_feature_flags     on feature_flags      for all using (is_admin()) with check (is_admin());
 
 create policy admin_scoring_rules      on scoring_rules      for all using (is_admin()) with check (is_admin());
 create policy admin_difficulty_config  on difficulty_config  for all using (is_admin()) with check (is_admin());

@@ -12,8 +12,9 @@
 insert into award_prizes (season_id, award_id, rank, title, subtitle, value_myr, image_alt)
 select s.id, a.id, p.rank, p.title, p.subtitle, p.value_myr, p.image_alt
 from seasons s
-join award_definitions a on a.code = p.award_code
-join (values
+-- The VALUES list has to come before the join that references p: SQL resolves
+-- FROM entries left to right, so p is not in scope until it is listed.
+cross join (values
   -- ---- Overall Champion: the headline prizes ---------------------------
   ('OVERALL_CHAMPION', 1, 'MacBook Air M3 13"',      'Plus RM3,000 EduPass scholarship credit', 7500.00, 'Laptop prize'),
   ('OVERALL_CHAMPION', 2, 'iPad Air + Apple Pencil', 'Plus RM1,500 EduPass credit',             4200.00, 'Tablet prize'),
@@ -43,7 +44,8 @@ join (values
   ('SCHOOL_CHAMPION', 1, 'RM5,000 for the school', 'Plus a trophy and an EduPass workshop', 5000.00, 'School trophy'),
   ('SCHOOL_CHAMPION', 2, 'RM3,000 for the school', null,                                    3000.00, 'School trophy'),
   ('SCHOOL_CHAMPION', 3, 'RM1,500 for the school', null,                                    1500.00, 'School trophy')
-) as p(award_code, rank, title, subtitle, value_myr, image_alt) on true
+) as p(award_code, rank, title, subtitle, value_myr, image_alt)
+join award_definitions a on a.code = p.award_code
 where s.code = 'SPM_GAMES_2026_S1'
 on conflict (season_id, award_id, rank) do update set
   title = excluded.title, subtitle = excluded.subtitle,
