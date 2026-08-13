@@ -28,6 +28,21 @@ export async function proxy(request: NextRequest) {
   const segments = pathname.split("/").filter(Boolean);
   const hasLocale = segments.length > 0 && isLocale(segments[0]);
 
+  // ---- 0. Catch a magic-link code wherever it lands -----------------------
+  //
+  // Supabase sends the student to its own /verify endpoint, which then
+  // redirects to `emailRedirectTo` — but only if that URL is allow-listed.
+  // Otherwise it falls back to the project's Site URL, and the code arrives at
+  // "/" instead of the callback. Rather than depend on a dashboard setting
+  // being exactly right, take the code from wherever it turns up.
+  const authCode = request.nextUrl.searchParams.get("code");
+  if (authCode && !pathname.endsWith("/callback")) {
+    const lang = hasLocale ? segments[0] : preferredLocale(request);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${lang}/${APP_SEGMENT}/callback`;
+    return NextResponse.redirect(url);
+  }
+
   // ---- 1. Locale prefixing ------------------------------------------------
   if (!hasLocale) {
     const url = request.nextUrl.clone();
