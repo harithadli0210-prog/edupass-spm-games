@@ -276,7 +276,9 @@ export function JoinForm({
         <Field
           label={dict.auth.emailLabel}
           htmlFor="email"
-          hint={dict.auth.emailHint}
+          hint={
+            emailCodeSupported ? dict.auth.emailHint : dict.auth.emailHintLink
+          }
           error={error ?? undefined}
           required
         >
@@ -300,7 +302,9 @@ export function JoinForm({
         loading={busy}
         disabled={method === "phone" ? phone.length < 9 : email.length < 5}
       >
-        {dict.auth.sendCode}
+        {method === "email" && !emailCodeSupported
+          ? dict.auth.sendLink
+          : dict.auth.sendCode}
       </Button>
     </form>
   );
