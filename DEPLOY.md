@@ -96,7 +96,59 @@ npm run questions:import     # load
 
 ---
 
-## 4. Deploy
+## 4. Email delivery
+
+Sign-in is by email, so delivery is not a nice-to-have — if it fails, nobody
+can log in.
+
+### While building
+
+Supabase's built-in email is rate limited to a few messages an hour and its
+templates are locked. Connecting any SMTP provider unlocks both. Resend is the
+least friction: sign up, create an API key, then fill in Supabase under
+**Project Settings → Authentication → SMTP Settings**:
+
+| Field | Value |
+|---|---|
+| Host | `smtp.resend.com` |
+| Port | `465` |
+| Username | `resend` |
+| Password | your `re_...` API key |
+| Sender | `onboarding@resend.dev` |
+
+With that sender you can only email the address you registered with — enough to
+test, not to launch.
+
+Once SMTP is live, edit the **Confirm signup** and **Magic Link** templates to
+include `{{ .Token }}`, then switch on `auth.email_code` in `/admin/flags`. The
+six-digit code field returns with no deploy.
+
+### Before launch
+
+Verify a domain in Resend and change the Sender field. Nothing in the codebase
+changes.
+
+**Send from a subdomain**, e.g. `spmgames@send.edupass.my`. If sending
+reputation is ever damaged it does not follow the main domain, so mail to
+schools and sponsors keeps arriving.
+
+Add the SPF, DKIM and DMARC records Resend provides to Cloudflare DNS. All
+three are required, not advisable: since 2024 Gmail spam-files or rejects bulk
+senders without them, and most students use Gmail. Fifty thousand sign-in
+emails landing in spam is the campaign stalling on day one.
+
+Allow one to two weeks — DNS takes time to propagate, and you want real test
+sends before students arrive.
+
+### Volume
+
+About one email per student to sign in, plus re-logins. At 50,000 students the
+free tier is far short; budget a paid tier. Still an order of magnitude cheaper
+than SMS.
+
+---
+
+## 5. Deploy
 
 Vercel is the path of least resistance for Next 16.
 
@@ -120,7 +172,7 @@ codebases and will drift.
 
 ---
 
-## 5. Before students arrive
+## 6. Before students arrive
 
 - [ ] **Prizes are placeholders.** Every value in `0004_prizes.sql` is invented.
       Replace them, or turn `competition.prizes` off in the switchboard, before
@@ -140,7 +192,7 @@ codebases and will drift.
 
 ---
 
-## 6. The switchboard
+## 7. The switchboard
 
 `/admin/flags`. Two switches per feature:
 
@@ -158,7 +210,7 @@ while nothing is written to leaderboards.
 
 ---
 
-## 7. After 31 October
+## 8. After 31 October
 
 1. Keep `question_difficulty_stats`, `student_season_stats`,
    `student_subject_stats` — small, and the basis of every EduPass
