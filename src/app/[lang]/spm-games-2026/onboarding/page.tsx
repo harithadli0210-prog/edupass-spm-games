@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/supabase/server";
+import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { OnboardingForm } from "@/components/auth/onboarding-form";
 import { PREVIEW } from "@/lib/preview";
 import { getDictionary, isLocale, type Locale } from "@/lib/i18n";
@@ -24,6 +24,14 @@ export default async function OnboardingPage({
   const { lang } = await params;
   const locale = (isLocale(lang) ? lang : "en") as Locale;
   const dict = getDictionary(locale);
+
+  // The student verified an address to get here, so asking for it again is
+  // pure friction — and a mismatch between the two would be a support ticket.
+  const supabase = await supabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const verifiedEmail = user?.email ?? null;
 
   // Preview mode has no database; the form renders with empty pickers so the
   // layout can still be reviewed.
@@ -56,6 +64,7 @@ export default async function OnboardingPage({
         districts={districts}
         dict={dict}
         lang={locale}
+        verifiedEmail={verifiedEmail}
       />
     </div>
   );

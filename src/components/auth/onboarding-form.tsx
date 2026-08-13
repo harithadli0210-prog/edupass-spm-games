@@ -26,11 +26,14 @@ export function OnboardingForm({
   districts,
   dict,
   lang,
+  verifiedEmail,
 }: {
   states: Option[];
   districts: District[];
   dict: Dictionary;
   lang: Locale;
+  /** Set when the student signed in by email; the field is then locked. */
+  verifiedEmail?: string | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -110,7 +113,9 @@ export function OnboardingForm({
 
       <Field label={dict.onboarding.email} htmlFor="email" required error={err("email")}>
         <Input id="email" name="email" type="email" inputMode="email"
-               autoComplete="email" required invalid={Boolean(err("email"))} />
+               autoComplete="email" required invalid={Boolean(err("email"))}
+               defaultValue={verifiedEmail ?? undefined}
+               readOnly={Boolean(verifiedEmail)} />
       </Field>
 
       <Field label={dict.onboarding.schoolName} htmlFor="school_name" required
