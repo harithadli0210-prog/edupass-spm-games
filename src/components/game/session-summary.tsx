@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowRight, Sparkles, Target, Timer, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SubjectIcon } from "@/components/ui/subject-icon";
 import { formatDuration, formatPercent, formatPoints } from "@/lib/utils";
+import { appPath, localeFromPath, t, type Dictionary } from "@/lib/i18n";
 import type { SessionSummary } from "@/lib/types";
 
 /**
@@ -16,7 +18,14 @@ import type { SessionSummary } from "@/lib/types";
  * where their points went — an invisible penalty reads as a bug, and a visible
  * one changes behaviour.
  */
-export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
+export function SessionSummaryCard({
+  summary,
+  dict,
+}: {
+  summary: SessionSummary;
+  dict: Dictionary;
+}) {
+  const lang = localeFromPath(usePathname());
   const gateApplied = summary.accuracy_factor < 1;
   const levelledUp = summary.level_after > summary.level_before;
 
@@ -37,10 +46,10 @@ export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
           <Sparkles size={24} strokeWidth={2} className="shrink-0 text-warning-ink" />
           <div>
             <div className="font-display text-base font-bold text-ink">
-              Level {summary.level_after}
+              {t(dict.game.levelUp, { level: summary.level_after })}
             </div>
             <div className="text-sm text-muted">
-              You levelled up from {summary.level_before}.
+              {t(dict.game.levelUpBody, { from: summary.level_before })}
             </div>
           </div>
         </motion.div>
@@ -52,7 +61,7 @@ export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
         </div>
 
         <div className="font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
-          Round score
+          {dict.game.roundScore}
         </div>
         <motion.div
           initial={{ scale: 0.9 }}
@@ -66,17 +75,17 @@ export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
         <div className="mt-6 grid grid-cols-3 gap-3 border-t border-line pt-5">
           <SummaryStat
             icon={<Target size={16} strokeWidth={2} />}
-            label="Accuracy"
+            label={dict.common.accuracy}
             value={formatPercent(summary.accuracy)}
           />
           <SummaryStat
             icon={<Timer size={16} strokeWidth={2} />}
-            label="Avg time"
+            label={dict.game.avgTime}
             value={formatDuration(summary.avg_response_ms)}
           />
           <SummaryStat
             icon={<Zap size={16} strokeWidth={2} />}
-            label="XP"
+            label={dict.common.xp}
             value={`+${formatPoints(summary.xp_awarded)}`}
           />
         </div>
@@ -87,7 +96,10 @@ export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
         <ul className="flex flex-col gap-2.5 text-sm">
           <li className="flex justify-between">
             <span className="text-muted">
-              {summary.correct} correct of {summary.answered}
+              {t(dict.game.correctOf, {
+                correct: summary.correct,
+                answered: summary.answered,
+              })}
             </span>
             <span className="tnum font-semibold text-ink">
               {formatPoints(summary.raw_points)}
@@ -96,7 +108,9 @@ export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
           {gateApplied && (
             <li className="flex justify-between">
               <span className="text-muted">
-                Accuracy multiplier &times;{summary.accuracy_factor.toFixed(2)}
+                {t(dict.game.accuracyMultiplier, {
+                  factor: summary.accuracy_factor.toFixed(2),
+                })}
               </span>
               <span className="tnum font-semibold text-danger-ink">
                 &minus;
@@ -108,14 +122,16 @@ export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
           )}
           {summary.completion_bonus > 0 && (
             <li className="flex justify-between">
-              <span className="text-muted">Completion bonus</span>
+              <span className="text-muted">{dict.game.completionBonus}</span>
               <span className="tnum font-semibold text-success-ink">
                 +{formatPoints(summary.completion_bonus)}
               </span>
             </li>
           )}
           <li className="flex justify-between border-t border-line pt-2.5">
-            <span className="font-display font-semibold text-ink">Total</span>
+            <span className="font-display font-semibold text-ink">
+              {dict.game.total}
+            </span>
             <span className="tnum font-display font-bold text-ink">
               {formatPoints(summary.final_points)}
             </span>
@@ -124,9 +140,7 @@ export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
 
         {gateApplied && (
           <p className="mt-4 rounded-md bg-surface p-3 text-xs leading-relaxed text-muted">
-            Your round total is scaled by accuracy, so answering carefully is
-            worth more than answering quickly. Getting more right lifts the
-            multiplier.
+            {dict.game.gateNote}
           </p>
         )}
       </div>
@@ -137,13 +151,13 @@ export function SessionSummaryCard({ summary }: { summary: SessionSummary }) {
           fullWidth
           onClick={() => window.location.reload()}
         >
-          Play again
+          {dict.game.playAgain}
         </Button>
         <Link
-          href="/spm-games"
+          href={appPath(lang)}
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border-2 border-brand-500 bg-white px-7 font-display text-[15px] font-semibold text-brand-900 transition-colors duration-200 hover:bg-brand-500 hover:text-white"
         >
-          Back to home
+          {dict.game.backHome}
           <ArrowRight size={18} strokeWidth={2} />
         </Link>
       </div>

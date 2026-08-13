@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { normalizePhone } from "@/lib/validation";
+import { appPath, localeFromPath, t, type Dictionary } from "@/lib/i18n";
 
 /**
  * Phone OTP sign-in.
@@ -15,10 +16,11 @@ import { normalizePhone } from "@/lib/validation";
  * more reliably than email, and a verified phone number doubles as the
  * duplicate-account guard the competition needs.
  */
-export function JoinForm() {
+export function JoinForm({ dict }: { dict: Dictionary }) {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") ?? "/spm-games";
+  const lang = localeFromPath(usePathname());
+  const next = params.get("next") ?? appPath(lang);
 
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phone, setPhone] = useState("");
@@ -32,7 +34,7 @@ export function JoinForm() {
 
     const normalized = normalizePhone(phone);
     if (!normalized) {
-      setError("Enter a Malaysian mobile number, e.g. 012-345 6789.");
+      setError(dict.auth.badPhone);
       return;
     }
 
@@ -63,7 +65,7 @@ export function JoinForm() {
     setBusy(false);
 
     if (verifyError) {
-      setError("That code didn't work. Check it and try again.");
+      setError(dict.auth.badCode);
       return;
     }
 
@@ -75,9 +77,9 @@ export function JoinForm() {
     return (
       <form onSubmit={verify} className="flex flex-col gap-4">
         <Field
-          label="Verification code"
+          label={dict.auth.verificationCode}
           htmlFor="code"
-          hint={`Sent to ${phone}`}
+          hint={t(dict.auth.sentTo, { phone })}
           error={error ?? undefined}
         >
           <Input
@@ -94,7 +96,7 @@ export function JoinForm() {
         </Field>
 
         <Button type="submit" fullWidth loading={busy} disabled={code.length < 4}>
-          Verify and continue
+          {dict.auth.verifyContinue}
         </Button>
 
         <button
@@ -107,7 +109,7 @@ export function JoinForm() {
           className="flex items-center justify-center gap-1.5 text-sm font-semibold text-muted hover:text-brand-500"
         >
           <ArrowLeft size={16} strokeWidth={2} />
-          Use a different number
+          {dict.auth.differentNumber}
         </button>
       </form>
     );
@@ -116,9 +118,9 @@ export function JoinForm() {
   return (
     <form onSubmit={sendCode} className="flex flex-col gap-4">
       <Field
-        label="Mobile number"
+        label={dict.auth.mobileNumber}
         htmlFor="phone"
-        hint="We'll text you a 6-digit code."
+        hint={dict.auth.mobileHint}
         error={error ?? undefined}
         required
       >
@@ -136,7 +138,7 @@ export function JoinForm() {
       </Field>
 
       <Button type="submit" fullWidth loading={busy} disabled={phone.length < 9}>
-        Send code
+        {dict.auth.sendCode}
       </Button>
     </form>
   );

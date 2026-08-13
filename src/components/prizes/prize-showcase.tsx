@@ -1,6 +1,7 @@
 import { PrizeImage } from "@/components/prizes/prize-art";
 import { cn, formatPoints } from "@/lib/utils";
 import type { PrizeCategory } from "@/lib/queries/prizes";
+import type { Dictionary } from "@/lib/i18n";
 
 /**
  * Prize showcase.
@@ -34,9 +35,11 @@ const CATEGORY_TINT: Record<string, string> = {
 export function PrizeShowcase({
   categories,
   limit,
+  dict,
 }: {
   categories: PrizeCategory[];
   limit?: number;
+  dict: Dictionary;
 }) {
   const shown = limit ? categories.slice(0, limit) : categories;
 
@@ -70,7 +73,7 @@ export function PrizeShowcase({
 
                 <div className="min-w-0 flex-1">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/25 px-2 py-0.5 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white">
-                    1st place
+                    {dict.prizes.firstPlace}
                   </span>
                   <h3 className="mt-1.5 truncate font-display text-[15px] font-bold text-white">
                     {first.title}
@@ -122,7 +125,7 @@ export function PrizeShowcase({
 
               {category.prizes.some((p) => p.sponsor_name) && (
                 <p className="mt-3 text-[11px] text-faint">
-                  Sponsored by{" "}
+                  {dict.prizes.sponsoredBy}{" "}
                   {[...new Set(category.prizes.map((p) => p.sponsor_name).filter(Boolean))].join(
                     ", ",
                   )}

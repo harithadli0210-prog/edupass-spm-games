@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { SectionHeading } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/states";
+import type { Dictionary } from "@/lib/i18n";
 
 /**
  * "What we're learning about you" (spec §26–27).
@@ -25,98 +26,63 @@ import { EmptyState } from "@/components/ui/states";
  * Inventing an insight for a student who has answered four questions would be
  * both wrong and, once they noticed, corrosive to everything else on the page.
  */
-const LABELS: Record<string, { label: string; icon: LucideIcon; note: string }> = {
-  FAST_THINKER: {
-    label: "Fast thinker",
-    icon: Zap,
-    note: "You answer noticeably quicker than most players.",
-  },
-  CAREFUL_RESPONDER: {
-    label: "Careful responder",
-    icon: Clock,
-    note: "You take your time and it shows in your accuracy.",
-  },
-  ANALYTICAL: {
-    label: "Analytical",
-    icon: Brain,
-    note: "You do well on questions that need working out.",
-  },
-  DIFFICULTY_TOLERANT: {
-    label: "Handles hard questions",
-    icon: Gauge,
-    note: "Your accuracy holds up on the toughest questions.",
-  },
-  PRESSURE_PERFORMER: {
-    label: "Strong under time pressure",
-    icon: Target,
-    note: "Your accuracy stays high in timed rounds.",
-  },
-  MATHEMATICAL_STRONG: {
-    label: "Strong in Mathematics",
-    icon: Sigma,
-    note: "Mathematics is among your best subjects.",
-  },
-  SCIENCE_STRONG: {
-    label: "Strong in Science",
-    icon: Microscope,
-    note: "Science is among your best subjects.",
-  },
-  LANGUAGE_STRONG: {
-    label: "Strong in languages",
-    icon: Languages,
-    note: "You perform well across BM and English.",
-  },
-  CONSISTENT: {
-    label: "Consistent",
-    icon: Flame,
-    note: "You show up and play regularly.",
-  },
-  PERSISTENT: {
-    label: "Persistent",
-    icon: Repeat,
-    note: "You come back to topics until they click.",
-  },
+const ICONS: Record<string, LucideIcon> = {
+  FAST_THINKER: Zap,
+  CAREFUL_RESPONDER: Clock,
+  ANALYTICAL: Brain,
+  DIFFICULTY_TOLERANT: Gauge,
+  PRESSURE_PERFORMER: Target,
+  MATHEMATICAL_STRONG: Sigma,
+  SCIENCE_STRONG: Microscope,
+  LANGUAGE_STRONG: Languages,
+  CONSISTENT: Flame,
+  PERSISTENT: Repeat,
 };
 
 export function BehaviourInsights({
   signals,
   hasPlayed,
+  dict,
 }: {
   signals: { signal: string; value: number; confidence: number }[];
   hasPlayed: boolean;
+  dict: Dictionary;
 }) {
-  const shown = signals
-    .filter((s) => LABELS[s.signal])
-    .slice(0, 3); // Three at most — this section must not become a wall.
+  // Three at most — this section must not become a wall.
+  const shown = signals.filter((s) => s.signal in ICONS).slice(0, 3);
 
   return (
     <section>
       <SectionHeading
-        title="What we're learning about you"
-        description="Based on how you've played so far."
+        title={dict.insights.title}
+        description={dict.insights.sub}
       />
 
       {shown.length === 0 ? (
         <EmptyState
           icon={<Brain size={24} strokeWidth={2} />}
-          title={hasPlayed ? "Still watching" : "Play a few rounds first"}
+          title={hasPlayed ? dict.insights.stillWatching : dict.insights.playFirst}
           description={
             hasPlayed
-              ? "A few more rounds and your playing patterns will start showing up here."
-              : "Once you've played, this is where we'll show what your answers suggest about how you learn."
+              ? dict.insights.stillWatchingBody
+              : dict.insights.playFirstBody
           }
         />
       ) : (
         <div className="flex flex-col gap-2.5">
           {shown.map((signal) => {
-            const meta = LABELS[signal.signal];
+            const Icon = ICONS[signal.signal];
+            const meta =
+              dict.insights.signals[
+                signal.signal as keyof typeof dict.insights.signals
+              ];
             return (
               <div
                 key={signal.signal}
                 className="flex items-start gap-3 rounded-lg border border-line bg-white p-4"
               >
                 <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-md bg-brand-100 text-brand-600">
-                  <meta.icon size={20} strokeWidth={2} />
+                  <Icon size={20} strokeWidth={2} />
                 </span>
                 <div className="min-w-0">
                   <div className="font-display text-sm font-semibold text-ink">

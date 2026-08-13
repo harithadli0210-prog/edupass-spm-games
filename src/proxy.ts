@@ -1,20 +1,60 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { APP_SEGMENT, DEFAULT_LOCALE, LOCALES, isLocale } from "@/lib/i18n/config";
 
 /**
- * Refreshes the Supabase session on every request and guards the play routes.
+ * Locale routing, session refresh and the play-route guard.
  *
- * The gate order matters: signed out → /join, signed in but no profile →
- * /onboarding. A student must not reach a question before the profile that
- * puts them on a leaderboard exists (spec §8).
+ * Order matters:
+ *   1. Bare paths get a locale prefix, so /spm-games-2026 never 404s.
+ *   2. Signed out → /join
+ *   3. Signed in without a profile → /onboarding
+ *
+ * A student must not reach a question before the profile that puts them on a
+ * leaderboard exists.
  */
+
+/** Best-effort locale from the browser, used only when the URL has none. */
+function preferredLocale(request: NextRequest) {
+  const header = request.headers.get("accept-language") ?? "";
+  // Malay speakers send ms, ms-MY, or id (close enough that Malay serves them
+  // far better than English would).
+  if (/\b(ms|id)\b/i.test(header.split(",")[0] ?? "")) return "ms";
+  return DEFAULT_LOCALE;
+}
+
 export async function proxy(request: NextRequest) {
-  // Preview mode has no auth to refresh and no profile to check. Bypassing the
-  // whole guard here is what makes every page reachable without a database.
+  const { pathname } = request.nextUrl;
+  const segments = pathname.split("/").filter(Boolean);
+  const hasLocale = segments.length > 0 && isLocale(segments[0]);
+
+  // ---- 1. Locale prefixing ------------------------------------------------
+  if (!hasLocale) {
+    const url = request.nextUrl.clone();
+    const lang = preferredLocale(request);
+    url.pathname =
+      pathname === "/" || pathname === ""
+        ? `/${lang}/${APP_SEGMENT}`
+        : `/${lang}${pathname}`;
+    return NextResponse.redirect(url);
+  }
+
+  const lang = segments[0];
+  const rest = `/${segments.slice(1).join("/")}`;
+  const inApp = rest === `/${APP_SEGMENT}` || rest.startsWith(`/${APP_SEGMENT}/`);
+
+  // Admin is English-only and gated inside its own layout.
+  if (!inApp) return NextResponse.next({ request });
+
+  const appPath = (p = "") => `/${lang}/${APP_SEGMENT}${p}`;
+
+  // ---- Preview mode -------------------------------------------------------
+  // No auth to refresh and no profile to check. Bypassing the guard is what
+  // makes every page reachable without a database.
   if (process.env.SPM_PREVIEW === "1") {
-    if (request.nextUrl.pathname === "/spm-games/join") {
+    if (rest === `/${APP_SEGMENT}/join`) {
       const url = request.nextUrl.clone();
-      url.pathname = "/spm-games";
+      url.pathname = appPath();
       url.search = "";
       return NextResponse.redirect(url);
     }
@@ -44,17 +84,16 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
-  const isPublic = path === "/spm-games/join" || path.startsWith("/spm-games/about");
+  const isPublic = rest === `/${APP_SEGMENT}/join`;
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = "/spm-games/join";
-    url.searchParams.set("next", path);
+    url.pathname = appPath("/join");
+    url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
-  if (user && path !== "/spm-games/onboarding" && !isPublic) {
+  if (user && rest !== `/${APP_SEGMENT}/onboarding` && !isPublic) {
     const { data: profile } = await supabase
       .from("student_profiles")
       .select("consent_at")
@@ -63,14 +102,14 @@ export async function proxy(request: NextRequest) {
 
     if (!profile?.consent_at) {
       const url = request.nextUrl.clone();
-      url.pathname = "/spm-games/onboarding";
+      url.pathname = appPath("/onboarding");
       return NextResponse.redirect(url);
     }
   }
 
-  if (user && path === "/spm-games/join") {
+  if (user && isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = "/spm-games";
+    url.pathname = appPath();
     url.search = "";
     return NextResponse.redirect(url);
   }
@@ -79,5 +118,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/spm-games/:path*"],
+  // Everything except Next internals, the API, and static files. The locale
+  // prefixer has to see bare paths, so this cannot be narrowed to /:lang/*.
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|brand|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|txt|xml)$).*)",
+  ],
 };
+
+export const LOCALE_LIST = LOCALES;

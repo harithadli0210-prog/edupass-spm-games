@@ -1,6 +1,7 @@
 import { Compass } from "lucide-react";
 import { SectionHeading } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/states";
+import type { Dictionary, Locale } from "@/lib/i18n";
 
 /**
  * Potential study areas (spec §28).
@@ -67,9 +68,13 @@ const MIN_TOTAL_ATTEMPTS = 60;
 export function StudyAreas({
   signals,
   subjects,
+  dict,
+  lang,
 }: {
   signals: { signal: string; value: number }[];
   subjects: { code: string; mastery: number; attempts: number }[];
+  dict: Dictionary;
+  lang: Locale;
 }) {
   const mastery: Record<string, number> = {};
   const attempts: Record<string, number> = {};
@@ -98,13 +103,13 @@ export function StudyAreas({
 
   return (
     <section>
-      <SectionHeading title="You might enjoy exploring" />
+      <SectionHeading title={dict.studyAreas.title} />
 
       {areas.length === 0 ? (
         <EmptyState
           icon={<Compass size={24} strokeWidth={2} />}
-          title="Not enough to go on yet"
-          description="Play across a few subjects and we'll suggest study areas worth a look."
+          title={dict.studyAreas.emptyTitle}
+          description={dict.studyAreas.emptyBody}
         />
       ) : (
         <div className="rounded-lg border border-line bg-white p-5">
@@ -120,16 +125,14 @@ export function StudyAreas({
           </ul>
 
           <p className="mt-4 text-xs leading-relaxed text-muted">
-            Based on your current game behaviour. These are places to look, not a
-            recommendation about your future — your interests and full academic
-            profile matter more than a quiz.
+            {dict.studyAreas.disclaimer}
           </p>
 
           <a
-            href="https://edupass.my/forstudents.html"
+            href={`https://edupass.my/${lang}/`}
             className="mt-3 inline-block font-display text-sm font-semibold text-brand-500 hover:text-brand-600"
           >
-            Complete your EduPass profile for better matches →
+            {dict.studyAreas.cta}
           </a>
         </div>
       )}

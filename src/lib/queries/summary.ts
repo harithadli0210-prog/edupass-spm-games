@@ -1,10 +1,12 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { getActiveSeason } from "@/lib/config";
 import { malaysiaDate } from "@/lib/utils";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
 import {
   PREVIEW,
   PREVIEW_SEASON,
   PREVIEW_SIGNALS,
+  PREVIEW_SUBJECTS,
   PREVIEW_SUBJECT_STATS,
 } from "@/lib/preview";
 
@@ -15,8 +17,12 @@ import {
  * can never drift — a Server Component calling its own API over HTTP would mean
  * an extra hop and a second copy of this shape.
  */
-export async function getStudentSummary(studentId: string, displayName: string) {
-  if (PREVIEW) return previewSummary(displayName);
+export async function getStudentSummary(
+  studentId: string,
+  displayName: string,
+  lang: Locale = DEFAULT_LOCALE,
+) {
+  if (PREVIEW) return previewSummary(displayName, lang);
 
   const season = await getActiveSeason();
   const db = supabaseAdmin();
@@ -32,7 +38,7 @@ export async function getStudentSummary(studentId: string, displayName: string) 
 
     db
       .from("student_subject_stats")
-      .select("subject_id, attempts, correct, mastery, points, subjects(code, name_en)")
+      .select("subject_id, attempts, correct, mastery, points, subjects(code, name_en, name_ms)")
       .eq("student_id", studentId)
       .eq("season_id", season.id),
 
@@ -128,10 +134,14 @@ export async function getStudentSummary(studentId: string, displayName: string) 
       ? { position: Number(mine.rank), total: Number(mine.total_participants) }
       : null,
     subjects: (subjectStats.data ?? []).map((row) => {
-      const subject = row.subjects as unknown as { code: string; name_en: string };
+      const subject = row.subjects as unknown as {
+        code: string;
+        name_en: string;
+        name_ms: string;
+      };
       return {
         code: subject.code,
-        name: subject.name_en,
+        name: lang === "ms" ? subject.name_ms : subject.name_en,
         attempts: row.attempts as number,
         mastery: Number(row.mastery),
         points: row.points as number,
@@ -149,7 +159,7 @@ export async function getStudentSummary(studentId: string, displayName: string) 
 export type StudentSummary = Awaited<ReturnType<typeof getStudentSummary>>;
 
 /** Mid-season figures for one student, used only when SPM_PREVIEW=1. */
-function previewSummary(displayName: string) {
+function previewSummary(displayName: string, lang: Locale) {
   const xp = 18420;
   return {
     student: { display_name: displayName },
@@ -177,7 +187,13 @@ function previewSummary(displayName: string) {
       avg_response_ms: 7840,
     },
     rank: { position: 184, total: 12483 },
-    subjects: PREVIEW_SUBJECT_STATS,
+    subjects: PREVIEW_SUBJECT_STATS.map((s) => ({
+      ...s,
+      name:
+        lang === "ms"
+          ? (PREVIEW_SUBJECTS.find((x) => x.code === s.code)?.name_ms ?? s.name)
+          : s.name,
+    })),
     signals: PREVIEW_SIGNALS,
     today: { daily_completed: ["MATH", "SCIENCE"] },
   };

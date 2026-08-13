@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
+import { appPath, type Dictionary, type Locale } from "@/lib/i18n";
 
 interface Option {
   id: string;
@@ -23,9 +24,13 @@ interface District extends Option {
 export function OnboardingForm({
   states,
   districts,
+  dict,
+  lang,
 }: {
   states: Option[];
   districts: District[];
+  dict: Dictionary;
+  lang: Locale;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -68,13 +73,13 @@ export function OnboardingForm({
 
       if (!res.ok) {
         setFieldErrors(data.issues?.fieldErrors ?? {});
-        throw new Error(data.error ?? "Could not save your details.");
+        throw new Error(data.error ?? dict.onboarding.saveError);
       }
 
-      router.push("/spm-games");
+      router.push(appPath(lang));
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save your details.");
+      setError(e instanceof Error ? e.message : dict.onboarding.saveError);
     } finally {
       setBusy(false);
     }
@@ -84,59 +89,59 @@ export function OnboardingForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
-      <Field label="Full name" htmlFor="full_name" required error={err("full_name")}
-             hint="As it appears on your IC.">
+      <Field label={dict.onboarding.fullName} htmlFor="full_name" required error={err("full_name")}
+             hint={dict.onboarding.fullNameHint}>
         <Input id="full_name" name="full_name" autoComplete="name" required
                invalid={Boolean(err("full_name"))} />
       </Field>
 
-      <Field label="Display name" htmlFor="display_name" required
+      <Field label={dict.onboarding.displayName} htmlFor="display_name" required
              error={err("display_name")}
-             hint="This is the only name shown on leaderboards.">
+             hint={dict.onboarding.displayNameHint}>
         <Input id="display_name" name="display_name" maxLength={30} required
                invalid={Boolean(err("display_name"))} />
       </Field>
 
-      <Field label="Phone number" htmlFor="phone" required error={err("phone")}>
+      <Field label={dict.onboarding.phone} htmlFor="phone" required error={err("phone")}>
         <Input id="phone" name="phone" type="tel" inputMode="tel"
                autoComplete="tel" placeholder="012-345 6789" required
                invalid={Boolean(err("phone"))} />
       </Field>
 
-      <Field label="Email" htmlFor="email" required error={err("email")}>
+      <Field label={dict.onboarding.email} htmlFor="email" required error={err("email")}>
         <Input id="email" name="email" type="email" inputMode="email"
                autoComplete="email" required invalid={Boolean(err("email"))} />
       </Field>
 
-      <Field label="School name" htmlFor="school_name" required
+      <Field label={dict.onboarding.schoolName} htmlFor="school_name" required
              error={err("school_name")}
-             hint="Write it out in full, e.g. SMK Taman Melawati.">
+             hint={dict.onboarding.schoolHint}>
         <Input id="school_name" name="school_name" required
                invalid={Boolean(err("school_name"))} />
       </Field>
 
-      <Field label="State" htmlFor="state_id" required error={err("state_id")}>
+      <Field label={dict.onboarding.state} htmlFor="state_id" required error={err("state_id")}>
         <Select id="state_id" name="state_id" required value={stateId}
                 onChange={(e) => setStateId(e.target.value)}
                 invalid={Boolean(err("state_id"))}>
-          <option value="">Choose your state</option>
+          <option value="">{dict.onboarding.chooseState}</option>
           {states.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </Select>
       </Field>
 
-      <Field label="District / City" htmlFor="district_id"
-             hint={stateId ? undefined : "Choose your state first."}>
+      <Field label={dict.onboarding.district} htmlFor="district_id"
+             hint={stateId ? undefined : dict.onboarding.districtHint}>
         <Select id="district_id" name="district_id" disabled={!stateId}>
-          <option value="">Choose your district</option>
+          <option value="">{dict.onboarding.chooseDistrict}</option>
           {stateDistricts.map((d) => (
             <option key={d.id} value={d.id}>{d.name}</option>
           ))}
         </Select>
       </Field>
 
-      <Field label="Postcode" htmlFor="postcode" required error={err("postcode")}>
+      <Field label={dict.onboarding.postcode} htmlFor="postcode" required error={err("postcode")}>
         <Input id="postcode" name="postcode" inputMode="numeric" maxLength={5}
                placeholder="53100" required invalid={Boolean(err("postcode"))} />
       </Field>
@@ -147,8 +152,7 @@ export function OnboardingForm({
           <input type="checkbox" name="consent" required
                  className="mt-0.5 size-5 shrink-0 accent-[#6846d6]" />
           <span>
-            I agree to EduPass storing these details to run SPM Games 2026 and to
-            place me on the competition leaderboards.
+            {dict.onboarding.consent}
             {err("consent") && (
               <span className="mt-1 block text-xs font-semibold text-danger-ink">
                 {err("consent")}
@@ -161,7 +165,7 @@ export function OnboardingForm({
           <input type="checkbox" name="guardian_consent"
                  className="mt-0.5 size-5 shrink-0 accent-[#6846d6]" />
           <span>
-            I am under 18 and my parent or guardian has agreed to my taking part.
+            {dict.onboarding.guardianConsent}
           </span>
         </label>
       </div>
@@ -173,7 +177,7 @@ export function OnboardingForm({
       )}
 
       <Button type="submit" size="lg" fullWidth loading={busy}>
-        Start playing
+        {dict.onboarding.submit}
       </Button>
     </form>
   );

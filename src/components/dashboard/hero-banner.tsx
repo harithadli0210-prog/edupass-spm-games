@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Gift, Play } from "lucide-react";
 import { formatPoints } from "@/lib/utils";
+import { appPath, t, type Dictionary, type Locale } from "@/lib/i18n";
 
 /**
  * Dashboard hero.
@@ -13,11 +14,15 @@ export function HeroBanner({
   name,
   prizePool,
   daysRemaining,
+  dict,
+  lang,
 }: {
   name: string;
   /** Null while prizes are switched off — the badge and CTA drop out cleanly. */
   prizePool: number | null;
   daysRemaining: number;
+  dict: Dictionary;
+  lang: Locale;
 }) {
   return (
     <section className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand-600 via-brand-500 to-accent-500 px-6 py-7 sm:px-8 sm:py-8">
@@ -35,34 +40,32 @@ export function HeroBanner({
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-white backdrop-blur-sm">
             <Gift size={13} strokeWidth={2.5} />
             {prizePool != null
-              ? `RM ${formatPoints(prizePool)} in prizes`
-              : "SPM Games 2026 · Season 1"}
+              ? `RM ${formatPoints(prizePool)} ${dict.hero.inPrizes}`
+              : dict.hero.seasonBadge}
           </span>
 
           <h1 className="mt-3 font-display text-[26px] font-extrabold leading-[1.12] text-white sm:text-[32px]">
-            Play, climb the ranks,
-            <br className="hidden sm:block" /> win real prizes.
+            {dict.hero.headline}
           </h1>
 
           <p className="mt-2 max-w-md text-sm leading-relaxed text-white/80">
-            {daysRemaining} days left this season, {name}. Every round you play
-            counts towards your Malaysia ranking.
+            {t(dict.hero.sub, { days: daysRemaining, name })}
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2.5">
             <Link
-              href="/spm-games/play/daily"
+              href={appPath(lang, "/play/daily")}
               className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 font-display text-sm font-bold text-brand-600 transition-transform duration-200 hover:-translate-y-0.5"
             >
               <Play size={15} strokeWidth={3} className="fill-brand-600" />
-              Play today&apos;s challenge
+              {dict.hero.playToday}
             </Link>
             {prizePool != null && (
               <Link
-                href="/spm-games/prizes"
+                href={appPath(lang, "/prizes")}
                 className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-white/45 px-5 font-display text-sm font-bold text-white transition-colors duration-200 hover:bg-white/15"
               >
-                View prizes
+                {dict.hero.viewPrizes}
               </Link>
             )}
           </div>

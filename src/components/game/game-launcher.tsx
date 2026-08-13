@@ -8,10 +8,11 @@ import {
   QuestionRunner,
   type StartedSession,
 } from "@/components/game/question-runner";
+import type { Dictionary } from "@/lib/i18n";
 
 interface Subject {
   code: string;
-  name_en: string;
+  name: string;
 }
 
 /**
@@ -25,11 +26,13 @@ interface Subject {
 export function GameLauncher({
   mode,
   subjects,
+  dict,
   completedToday = [],
   mastery = {},
 }: {
   mode: "DAILY" | "SPEED";
   subjects: Subject[];
+  dict: Dictionary;
   completedToday?: string[];
   mastery?: Record<string, { mastery: number; attempts: number }>;
 }) {
@@ -38,7 +41,7 @@ export function GameLauncher({
   const [starting, setStarting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (session) return <QuestionRunner session={session} />;
+  if (session) return <QuestionRunner session={session} dict={dict} />;
 
   const start = async (subjectCode: string) => {
     setStarting(subjectCode);
@@ -50,11 +53,11 @@ export function GameLauncher({
         body: JSON.stringify({ mode, subject: subjectCode }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Could not start the round.");
+      if (!res.ok) throw new Error(data.error ?? dict.errors.couldNotStart);
       setSession(data as StartedSession);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not start the round.");
+      setError(e instanceof Error ? e.message : dict.errors.couldNotStart);
     } finally {
       setStarting(null);
     }
@@ -62,14 +65,9 @@ export function GameLauncher({
 
   const metaFor = (code: string) => {
     const stat = mastery[code];
-    if (mode === "DAILY") {
-      return stat?.attempts
-        ? `10 questions · ${Math.round(stat.mastery * 100)}% mastery`
-        : "10 questions · once a day";
-    }
-    return stat?.attempts
-      ? `60 seconds · ${Math.round(stat.mastery * 100)}% mastery`
-      : "60 seconds · unlimited";
+    const base = mode === "DAILY" ? dict.play.dailyMeta : dict.play.speedMeta;
+    if (!stat?.attempts) return base;
+    return `${base.split("·")[0].trim()} · ${Math.round(stat.mastery * 100)}% ${dict.common.mastery}`;
   };
 
   return (
@@ -85,9 +83,12 @@ export function GameLauncher({
           <GameCard
             key={subject.code}
             code={subject.code}
-            name={subject.name_en}
+            name={subject.name}
             meta={metaFor(subject.code)}
             done={mode === "DAILY" && completedToday.includes(subject.code)}
+            doneLabel={dict.common.doneToday}
+            playLabel={dict.common.playNow}
+            busyLabel={dict.game.starting}
             busy={starting === subject.code}
             disabled={starting !== null}
             onPlay={() => void start(subject.code)}
@@ -98,10 +99,7 @@ export function GameLauncher({
       {mode === "DAILY" && completedToday.length === subjects.length && (
         <div className="flex items-center gap-3 rounded-lg border border-line bg-white p-4">
           <Lock size={20} strokeWidth={2} className="shrink-0 text-muted" />
-          <p className="text-sm text-muted">
-            All five subjects done for today. New questions unlock at midnight —
-            or play Speedy Challenge now, it has no daily limit.
-          </p>
+          <p className="text-sm text-muted">{dict.play.allDoneTitle}</p>
         </div>
       )}
     </div>

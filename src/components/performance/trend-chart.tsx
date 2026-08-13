@@ -24,7 +24,13 @@ interface TrendRow extends TrendPoint {
  * second hue. Y is pinned to 0–100 so a good week and a bad week are visually
  * comparable rather than each being auto-scaled to fill the box.
  */
-export function TrendChart({ data }: { data: TrendPoint[] }) {
+export function TrendChart({
+  data,
+  label = "Accuracy",
+}: {
+  data: TrendPoint[];
+  label?: string;
+}) {
   const points = data.map((d) => ({
     ...d,
     accuracyPct: Math.round(d.accuracy * 100),
@@ -72,7 +78,7 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
             labelStyle={{ color: "#22154a", fontWeight: 700 }}
             formatter={(value, _name, item) => [
               `${value}% · ${(item?.payload as TrendRow | undefined)?.attempts ?? 0} questions`,
-              "Accuracy",
+              label,
             ]}
           />
           <Area

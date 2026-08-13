@@ -1,44 +1,51 @@
 import Link from "next/link";
 import { Sidebar } from "@/components/shell/sidebar";
 import { AppNav } from "@/components/app-nav";
+import { LocaleSwitch } from "@/components/shell/locale-switch";
 import { Logo } from "@/components/brand/logo";
+import { appPath, getDictionary, isLocale, type Locale } from "@/lib/i18n";
 
 /**
  * App shell.
  *
  * Sidebar on desktop, bottom bar on mobile. The header keeps the marketing
- * site's proportions — 78px tall, tinted translucent brand-100 — so crossing
- * from edupass.html into the game doesn't feel like landing on a different
- * product.
+ * site's 78px proportions so crossing from edupass.my into the game does not
+ * feel like landing on a different product.
  */
-export default function SpmGamesLayout({
+export default async function SpmGamesLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ lang: string }>;
 }) {
+  const { lang } = await params;
+  const locale = (isLocale(lang) ? lang : "en") as Locale;
+  const dict = getDictionary(locale);
+
   return (
     <div className="flex min-h-dvh bg-surface">
-      <Sidebar />
+      <Sidebar dict={dict} />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-40 border-b border-brand-200/70 bg-brand-100/85 backdrop-blur-md lg:bg-white/85">
           <div className="flex h-[78px] items-center justify-between gap-4 px-4 sm:px-6">
             <Link
-              href="/spm-games"
+              href={appPath(locale)}
               className="flex items-center gap-2.5 lg:hidden"
-              aria-label="EduPass — SPM Games"
+              aria-label="edupass.my — SPM Games"
             >
               <Logo variant="full" className="h-6" priority />
-              <span className="hidden rounded-full bg-brand-500 px-2.5 py-1 font-display text-[10px] font-bold uppercase tracking-[0.08em] text-white xs:inline sm:inline">
-                SPM Games
-              </span>
             </Link>
 
             <span className="hidden font-display text-sm font-semibold text-muted lg:block">
-              SPM Games 2026 · Season 1
+              {dict.hero.seasonBadge}
             </span>
 
-            <AppNav />
+            <div className="flex items-center gap-3">
+              <LocaleSwitch className="lg:hidden" />
+              <AppNav dict={dict} />
+            </div>
           </div>
         </header>
 

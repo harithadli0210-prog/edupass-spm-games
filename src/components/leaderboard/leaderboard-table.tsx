@@ -2,6 +2,7 @@ import { Trophy } from "lucide-react";
 import { EmptyState } from "@/components/ui/states";
 import { cn, formatPoints, formatRank } from "@/lib/utils";
 import type { LeaderboardPayload } from "@/lib/queries/leaderboard";
+import type { Dictionary } from "@/lib/i18n";
 import type { LeaderboardKey, LeaderboardRow } from "@/lib/types";
 
 /**
@@ -12,17 +13,19 @@ import type { LeaderboardKey, LeaderboardRow } from "@/lib/types";
 export function LeaderboardTable({
   board,
   data,
+  dict,
 }: {
   board: LeaderboardKey;
   data: LeaderboardPayload;
+  dict: Dictionary;
 }) {
   if (board === "school") {
     if (data.schools.length === 0) {
       return (
         <EmptyState
           icon={<Trophy size={24} strokeWidth={2} />}
-          title="No schools ranked yet"
-          description="Schools appear here once enough of their students have played."
+          title={dict.leaderboard.noSchools}
+          description={dict.leaderboard.noSchoolsBody}
         />
       );
     }
@@ -39,7 +42,7 @@ export function LeaderboardTable({
                 {school.school_name}
               </div>
               <div className="truncate text-xs text-muted">
-                {[school.state_name, `${school.participants} players`]
+                {[school.state_name, `${school.participants} ${dict.common.players}`]
                   .filter(Boolean)
                   .join(" · ")}
               </div>
@@ -57,11 +60,11 @@ export function LeaderboardTable({
     return (
       <EmptyState
         icon={<Trophy size={24} strokeWidth={2} />}
-        title="Nobody ranked yet"
+        title={dict.leaderboard.nobodyRanked}
         description={
           board === "improved"
-            ? "This board opens once students have a full record in both September and October."
-            : "Be the first - play a round and you're on the board."
+            ? dict.leaderboard.improvedEmpty
+            : dict.leaderboard.beFirst
         }
       />
     );
@@ -72,7 +75,7 @@ export function LeaderboardTable({
   return (
     <div className="flex flex-col gap-2">
       {data.top.map((row) => (
-        <Row key={row.student_id} row={row} />
+        <Row key={row.student_id} row={row} youLabel={dict.dashboard.you} />
       ))}
 
       {/* The student's own position stays visible however far down they are.
@@ -81,26 +84,27 @@ export function LeaderboardTable({
         <div className="sticky bottom-[76px] mt-3 sm:bottom-4">
           <div className="rounded-lg border-2 border-brand-500 bg-white p-3 shadow-card">
             <div className="mb-1.5 font-display text-[11px] font-bold uppercase tracking-[0.1em] text-brand-500">
-              Your position
+              {dict.leaderboard.yourPosition}
             </div>
             <Row
               row={{
                 rank: data.you.rank,
                 student_id: "you",
-                display_name: "You",
+                display_name: dict.dashboard.you,
                 school_name: null,
                 state_name: null,
                 points: data.you.points,
                 is_you: true,
               }}
               bare
+              youLabel={dict.dashboard.you}
             />
             {data.points_to_top_100 != null && data.points_to_top_100 > 0 && (
               <p className="mt-2 text-center text-xs text-muted">
                 <span className="tnum font-semibold text-ink">
                   {formatPoints(data.points_to_top_100)}
                 </span>{" "}
-                points to reach the Top 100
+                {dict.dashboard.pointsToTop100}
               </p>
             )}
           </div>
@@ -110,7 +114,15 @@ export function LeaderboardTable({
   );
 }
 
-function Row({ row, bare }: { row: LeaderboardRow; bare?: boolean }) {
+function Row({
+  row,
+  bare,
+  youLabel = "You",
+}: {
+  row: LeaderboardRow;
+  bare?: boolean;
+  youLabel?: string;
+}) {
   return (
     <div
       className={cn(
@@ -125,7 +137,7 @@ function Row({ row, bare }: { row: LeaderboardRow; bare?: boolean }) {
           {row.display_name}
           {row.is_you && (
             <span className="ml-2 rounded-full bg-brand-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-              You
+              {youLabel}
             </span>
           )}
         </div>

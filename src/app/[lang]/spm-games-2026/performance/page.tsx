@@ -11,117 +11,139 @@ import { TabStrip } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/states";
 import { TrendChart } from "@/components/performance/trend-chart";
 import { formatDuration, formatPercent, formatPoints } from "@/lib/utils";
+import { appPath, getDictionary, isLocale, t, type Locale } from "@/lib/i18n";
 
-export const metadata = { title: "My performance" };
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  return {
+    title: getDictionary((isLocale(lang) ? lang : "en") as Locale).performance.title,
+  };
+}
+
 export default async function PerformancePage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ lang: string }>;
   searchParams: Promise<{ subject?: string }>;
 }) {
+  const { lang } = await params;
   const { subject = "ALL" } = await searchParams;
-  const student = await currentStudent();
+  const locale = (isLocale(lang) ? lang : "en") as Locale;
+  const dict = getDictionary(locale);
 
+  const student = await currentStudent();
   const [subjects, performance, summary] = await Promise.all([
-    getSubjects(),
+    getSubjects(locale),
     getPerformance(student!.id, subject),
-    getStudentSummary(student!.id, student!.display_name),
+    getStudentSummary(student!.id, student!.display_name, locale),
   ]);
 
   const tabs = [
-    { key: "ALL", label: "Overall", href: "/spm-games/performance" },
+    { key: "ALL", label: dict.dashboard.overall, href: appPath(locale, "/performance") },
     ...subjects.map((s) => ({
       key: s.code,
-      label: s.name_en,
-      href: `/spm-games/performance?subject=${s.code}`,
+      label: s.name,
+      href: appPath(locale, `/performance?subject=${s.code}`),
     })),
   ];
+
+  const difficultyLabel = {
+    EASY: dict.performance.easy,
+    MEDIUM: dict.performance.medium,
+    HARD: dict.performance.hard,
+  } as const;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-display text-2xl font-bold text-ink">My performance</h1>
-        <p className="mt-1 text-sm text-muted">
-          How you&apos;re doing this season, and where the gaps are.
-        </p>
+        <h1 className="font-display text-2xl font-bold text-ink">
+          {dict.performance.title}
+        </h1>
+        <p className="mt-1 text-sm text-muted">{dict.performance.sub}</p>
       </div>
 
       <TabStrip items={tabs} activeKey={subject} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
-          label="Overall score"
+          label={dict.performance.overallScore}
           value={formatPoints(summary.stats.overall_points)}
           icon={<TrendingUp size={16} strokeWidth={2} />}
           tone="brand"
         />
         <Stat
-          label="Accuracy"
+          label={dict.common.accuracy}
           value={formatPercent(performance.totals.accuracy)}
-          hint={`${formatPoints(performance.totals.correct)} correct`}
+          hint={`${formatPoints(performance.totals.correct)} ${dict.common.correct}`}
           icon={<Target size={16} strokeWidth={2} />}
         />
         <Stat
-          label="Avg response"
+          label={dict.performance.avgResponse}
           value={formatDuration(performance.totals.avg_response_ms)}
           icon={<Timer size={16} strokeWidth={2} />}
         />
         <Stat
-          label="Questions"
+          label={dict.common.questions}
           value={formatPoints(performance.totals.attempts)}
-          hint={`${summary.stats.active_days} active days`}
+          hint={t(dict.performance.activeDays, { days: summary.stats.active_days })}
           icon={<LineChart size={16} strokeWidth={2} />}
         />
       </div>
 
       <section>
         <SectionHeading
-          title="Accuracy over time"
-          description="Each point is one day of play."
+          title={dict.performance.accuracyOverTime}
+          description={dict.performance.accuracyOverTimeSub}
         />
         {performance.trend.length < 2 ? (
           <EmptyState
             icon={<LineChart size={24} strokeWidth={2} />}
-            title="Not enough days yet"
-            description="Play on at least two different days and your trend appears here."
+            title={dict.performance.notEnoughDays}
+            description={dict.performance.notEnoughDaysBody}
             action={
               <Link
-                href="/spm-games/play"
+                href={appPath(locale, "/play")}
                 className="inline-flex h-11 items-center rounded-full bg-brand-500 px-5 font-display text-sm font-semibold text-white"
               >
-                Play a round
+                {dict.performance.playARound}
               </Link>
             }
           />
         ) : (
-          <div className="rounded-lg border border-line bg-white p-4">
-            <TrendChart data={performance.trend} />
+          <div className="rounded-md border border-line bg-white p-4">
+            <TrendChart data={performance.trend} label={dict.common.accuracy} />
           </div>
         )}
       </section>
 
       <section>
         <SectionHeading
-          title="By difficulty"
-          description="Where your accuracy holds up, and where it drops."
+          title={dict.performance.byDifficulty}
+          description={dict.performance.byDifficultySub}
         />
         {performance.totals.attempts === 0 ? (
           <EmptyState
             icon={<Target size={24} strokeWidth={2} />}
-            title="No questions answered yet"
-            description="This breaks down how you do on easy, medium and hard questions."
+            title={dict.performance.noQuestions}
+            description={dict.performance.noQuestionsBody}
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-3">
             {performance.difficulty.map((d) => (
               <div
                 key={d.label}
-                className="flex min-h-[104px] flex-col justify-between rounded-lg border border-line bg-white p-4"
+                className="flex min-h-[104px] flex-col justify-between rounded-md border border-line bg-white p-4"
               >
                 <div className="flex items-baseline justify-between">
                   <span className="font-display text-[11px] font-bold uppercase tracking-[0.1em] text-muted">
-                    {d.label}
+                    {difficultyLabel[d.label]}
                   </span>
                   <span className="tnum font-display text-xl font-bold text-ink">
                     {d.attempts > 0 ? formatPercent(d.accuracy) : "—"}
@@ -138,10 +160,10 @@ export default async function PerformancePage({
                           ? "warning"
                           : "danger"
                     }
-                    label={`${d.label} accuracy`}
+                    label={`${difficultyLabel[d.label]} ${dict.common.accuracy}`}
                   />
                   <p className="mt-1.5 text-xs text-muted">
-                    {d.attempts} questions
+                    {d.attempts} {dict.common.questions}
                   </p>
                 </div>
               </div>

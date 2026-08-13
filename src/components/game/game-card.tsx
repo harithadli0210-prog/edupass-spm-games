@@ -33,6 +33,9 @@ export function GameCard({
   busy,
   disabled,
   onPlay,
+  doneLabel = "Done today",
+  playLabel = "Play Now",
+  busyLabel = "Starting",
 }: {
   code: string;
   name: string;
@@ -41,6 +44,9 @@ export function GameCard({
   busy?: boolean;
   disabled?: boolean;
   onPlay: () => void;
+  doneLabel?: string;
+  playLabel?: string;
+  busyLabel?: string;
 }) {
   const skin = SKINS[code] ?? SKINS.MATH;
 
@@ -85,7 +91,7 @@ export function GameCard({
         {done ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3.5 py-2 font-display text-xs font-bold text-ink">
             <Check size={14} strokeWidth={3} className="text-success" />
-            Done today
+            {doneLabel}
           </span>
         ) : (
           <span
@@ -99,7 +105,7 @@ export function GameCard({
             ) : (
               <Play size={13} strokeWidth={3} className="fill-ink" />
             )}
-            {busy ? "Starting" : "Play Now"}
+            {busy ? busyLabel : playLabel}
           </span>
         )}
       </div>

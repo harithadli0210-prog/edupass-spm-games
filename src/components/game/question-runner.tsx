@@ -11,6 +11,7 @@ import { SubjectIcon } from "@/components/ui/subject-icon";
 import { ErrorState } from "@/components/ui/states";
 import { SessionSummaryCard } from "@/components/game/session-summary";
 import { cn, formatClock } from "@/lib/utils";
+import type { Dictionary } from "@/lib/i18n";
 import type { AnswerResult, ServedQuestion, SessionSummary } from "@/lib/types";
 
 export interface StartedSession {
@@ -48,7 +49,13 @@ function elapsedSince(startMs: number): number {
  * question would double the taps and destroy a 60-second Speedy round
  * (spec section 33).
  */
-export function QuestionRunner({ session }: { session: StartedSession }) {
+export function QuestionRunner({
+  session,
+  dict,
+}: {
+  session: StartedSession;
+  dict: Dictionary;
+}) {
   const router = useRouter();
 
   const [phase, setPhase] = useState<Phase>(
@@ -80,15 +87,15 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
         method: "POST",
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Could not finish the round.");
+      if (!res.ok) throw new Error(data.error ?? dict.errors.couldNotFinish);
       setSummary(data as SessionSummary);
       setPhase("finished");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not finish the round.");
+      setError(e instanceof Error ? e.message : dict.errors.couldNotFinish);
       setPhase("error");
     }
-  }, [session.session_id, router]);
+  }, [session.session_id, router, dict.errors.couldNotFinish]);
 
   const loadNext = useCallback(async () => {
     try {
@@ -98,7 +105,7 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
       if (!res.ok) {
         // A closed session is the expected end of a Speedy round, not a fault.
         if (data.code === "SESSION_CLOSED") return finish();
-        throw new Error(data.error ?? "Could not load the question.");
+        throw new Error(data.error ?? dict.errors.couldNotLoad);
       }
 
       if (data.exhausted || !data.question) return finish();
@@ -109,10 +116,10 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
       shownAt.current = nowMs();
       setPhase("question");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load the question.");
+      setError(e instanceof Error ? e.message : dict.errors.couldNotLoad);
       setPhase("error");
     }
-  }, [session.session_id, finish]);
+  }, [session.session_id, finish, dict.errors.couldNotLoad]);
 
   // The first question arrived with the start response, so there is no
   // fetch-on-mount here at all. Every later question is loaded from the answer
@@ -155,7 +162,7 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
 
       if (!res.ok) {
         if (data.code === "SESSION_CLOSED") return finish();
-        throw new Error(data.error ?? "Could not record your answer.");
+        throw new Error(data.error ?? dict.errors.couldNotRecord);
       }
 
       const answerResult = data as AnswerResult;
@@ -175,7 +182,7 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
       }, dwell);
     } catch (e) {
       submitting.current = false;
-      setError(e instanceof Error ? e.message : "Could not record your answer.");
+      setError(e instanceof Error ? e.message : dict.errors.couldNotRecord);
       setPhase("error");
     }
   };
@@ -185,8 +192,9 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
   if (phase === "error") {
     return (
       <ErrorState
-        title="The round hit a problem"
+        title={dict.game.errorTitle}
         description={error ?? undefined}
+        retryLabel={dict.common.tryAgain}
         onRetry={() => {
           setError(null);
           setPhase("loading");
@@ -197,7 +205,7 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
   }
 
   if (phase === "finished" && summary) {
-    return <SessionSummaryCard summary={summary} />;
+    return <SessionSummaryCard summary={summary} dict={dict} />;
   }
 
   const total = session.total_questions;
@@ -216,8 +224,8 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
             </div>
             <div className="tnum text-xs text-muted">
               {isSpeed
-                ? `${answered} answered`
-                : `Question ${String(question?.position ?? answered + 1).padStart(2, "0")} / ${total}`}
+                ? `${answered} ${dict.common.answered}`
+                : `${dict.game.question} ${String(question?.position ?? answered + 1).padStart(2, "0")} / ${total}`}
             </div>
           </div>
         </div>
@@ -225,7 +233,7 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
         <div className="flex items-center gap-3">
           <div className="text-right">
             <div className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
-              Points
+              {dict.game.points}
             </div>
             <motion.div
               key={points}
@@ -356,17 +364,17 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
                     result.is_correct ? "text-success-ink" : "text-danger-ink",
                   )}
                 >
-                  {result.is_correct ? "Correct" : "Not quite"}
+                  {result.is_correct ? dict.game.correct : dict.game.notQuite}
                 </span>
                 {result.points_awarded !== 0 && (
                   <span className="tnum font-display text-sm font-semibold text-ink">
                     {result.points_awarded > 0 ? "+" : ""}
-                    {result.points_awarded} points
+                    {result.points_awarded} {dict.common.points}
                   </span>
                 )}
                 {result.speed_bonus > 0 && (
                   <span className="tnum text-sm font-semibold text-warning-ink">
-                    +{result.speed_bonus} speed
+                    +{result.speed_bonus} {dict.game.speed}
                   </span>
                 )}
                 <span className="tnum text-sm text-muted">+{result.xp_awarded} XP</span>
@@ -384,7 +392,7 @@ export function QuestionRunner({ session }: { session: StartedSession }) {
 
       {isSpeed && phase === "question" && (
         <Button variant="ghost" size="sm" onClick={() => void finish()}>
-          End round early
+          {dict.game.endEarly}
         </Button>
       )}
     </div>

@@ -33,11 +33,11 @@ export const PREVIEW_SEASON: Season = {
 };
 
 export const PREVIEW_SUBJECTS = [
-  { code: "BM", name_en: "Bahasa Melayu" },
-  { code: "ENGLISH", name_en: "English" },
-  { code: "MATH", name_en: "Mathematics" },
-  { code: "SCIENCE", name_en: "Science" },
-  { code: "SEJARAH", name_en: "History" },
+  { code: "BM", name_en: "Bahasa Melayu", name_ms: "Bahasa Melayu" },
+  { code: "ENGLISH", name_en: "English", name_ms: "Bahasa Inggeris" },
+  { code: "MATH", name_en: "Mathematics", name_ms: "Matematik" },
+  { code: "SCIENCE", name_en: "Science", name_ms: "Sains" },
+  { code: "SEJARAH", name_en: "History", name_ms: "Sejarah" },
 ];
 
 /** Mirrors supabase/seed/0002_config.sql exactly. */

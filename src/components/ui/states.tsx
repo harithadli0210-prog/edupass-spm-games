@@ -61,11 +61,13 @@ export function EmptyState({
 export function ErrorState({
   title = "Something went wrong",
   description = "We couldn't load this just now. Check your connection and try again.",
+  retryLabel = "Try again",
   onRetry,
   className,
 }: {
   title?: string;
   description?: string;
+  retryLabel?: string;
   onRetry?: () => void;
   className?: string;
 }) {
@@ -84,7 +86,7 @@ export function ErrorState({
       {onRetry && (
         <Button variant="outline" size="sm" className="mt-5" onClick={onRetry}>
           <RefreshCw size={16} strokeWidth={2} />
-          Try again
+          {retryLabel}
         </Button>
       )}
     </div>

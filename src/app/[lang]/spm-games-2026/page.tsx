@@ -15,6 +15,13 @@ import { getSubjects } from "@/lib/queries/subjects";
 import { getLeaderboard } from "@/lib/queries/leaderboard";
 import { getPrizePool, getPrizes } from "@/lib/queries/prizes";
 import { resolveFlags } from "@/lib/flags";
+import {
+  appPath,
+  getDictionary,
+  isLocale,
+  t,
+  type Locale,
+} from "@/lib/i18n";
 import { HeroBanner } from "@/components/dashboard/hero-banner";
 import { MasteryRadar } from "@/components/dashboard/mastery-radar";
 import { GameLauncher } from "@/components/game/game-launcher";
@@ -24,24 +31,25 @@ import { SubjectIcon } from "@/components/ui/subject-icon";
 import { EmptyState } from "@/components/ui/states";
 import { BehaviourInsights } from "@/components/dashboard/behaviour-insights";
 import { StudyAreas } from "@/components/dashboard/study-areas";
-import {
-  cn,
-  formatPercent,
-  formatPoints,
-  formatRank,
-  greeting,
-} from "@/lib/utils";
+import { cn, formatPercent, formatPoints, formatRank, greeting } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
-  const student = await currentStudent();
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const locale = (isLocale(lang) ? lang : "en") as Locale;
+  const dict = getDictionary(locale);
 
+  const student = await currentStudent();
   const isAdmin = Boolean(student?.is_admin);
 
   const [summary, subjects, prizes, prizePool, board, flags] = await Promise.all([
-    getStudentSummary(student!.id, student!.display_name),
-    getSubjects(),
+    getStudentSummary(student!.id, student!.display_name, locale),
+    getSubjects(locale),
     getPrizes(),
     getPrizePool(),
     getLeaderboard({ board: "overall", studentId: student!.id, limit: 3 }),
@@ -68,22 +76,24 @@ export default async function DashboardPage() {
         name={summary.student.display_name}
         prizePool={flags["competition.prizes"] ? prizePool : null}
         daysRemaining={summary.season.days_remaining}
+        dict={dict}
+        lang={locale}
       />
 
       {/* ---- Overview ------------------------------------------------------ */}
       <section>
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm text-muted">{greeting()},</p>
+            <p className="text-sm text-muted">{greetingFor(dict)},</p>
             <h2 className="font-display text-xl font-bold text-ink">
               {summary.student.display_name}
             </h2>
           </div>
           <Link
-            href="/spm-games/performance"
+            href={appPath(locale, "/performance")}
             className="flex items-center gap-1 font-display text-sm font-semibold text-brand-500"
           >
-            Full progress <ArrowRight size={16} strokeWidth={2.4} />
+            {dict.dashboard.fullProgress} <ArrowRight size={16} strokeWidth={2.4} />
           </Link>
         </div>
 
@@ -97,7 +107,7 @@ export default async function DashboardPage() {
             <div className="relative flex items-center gap-2">
               <Trophy size={18} strokeWidth={2.2} className="text-warning" />
               <span className="font-display text-[11px] font-bold uppercase tracking-[0.1em] text-white/75">
-                Malaysia rank
+                {dict.dashboard.malaysiaRank}
               </span>
             </div>
             <p className="tnum relative mt-2 font-display text-[40px] font-extrabold leading-none">
@@ -105,14 +115,14 @@ export default async function DashboardPage() {
             </p>
             <p className="relative mt-1 text-xs text-white/70">
               {rank
-                ? `of ${formatPoints(rank.total)} players nationwide`
-                : "Play a round to get ranked"}
+                ? t(dict.dashboard.ofPlayers, { total: formatPoints(rank.total) })
+                : dict.dashboard.playToGetRanked}
             </p>
 
             <div className="relative mt-5 border-t border-white/20 pt-4">
               <div className="mb-1.5 flex items-baseline justify-between">
                 <span className="font-display text-sm font-bold">
-                  Level {stats.level} · {stats.level_title}
+                  {dict.common.level} {stats.level} · {stats.level_title}
                 </span>
                 {stats.xp_for_next && (
                   <span className="tnum text-[11px] text-white/70">
@@ -135,37 +145,39 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-2 gap-3">
             <MiniStat
               icon={<Sparkles size={16} strokeWidth={2.2} />}
-              label="Overall"
+              label={dict.dashboard.overall}
               value={formatPoints(stats.overall_points)}
-              hint="points"
+              hint={dict.common.points}
             />
             <MiniStat
               icon={<Zap size={16} strokeWidth={2.2} />}
-              label="XP"
+              label={dict.common.xp}
               value={formatPoints(stats.xp)}
-              hint={`Level ${stats.level}`}
+              hint={`${dict.common.level} ${stats.level}`}
             />
             <MiniStat
               icon={<Flame size={16} strokeWidth={2.2} />}
-              label="Streak"
+              label={dict.common.streak}
               value={`${stats.current_streak}`}
-              hint={stats.current_streak === 1 ? "day" : "days"}
+              hint={stats.current_streak === 1 ? dict.common.day : dict.common.days}
               tone="warning"
             />
             <MiniStat
               icon={<Target size={16} strokeWidth={2.2} />}
-              label="Accuracy"
+              label={dict.common.accuracy}
               value={formatPercent(stats.accuracy)}
-              hint={`${formatPoints(stats.questions_answered)} answered`}
+              hint={`${formatPoints(stats.questions_answered)} ${dict.common.answered}`}
             />
           </div>
 
           {/* Mastery radar */}
           <div className="rounded-xl border border-line bg-white p-4">
-            <h3 className="font-display text-sm font-bold text-ink">Performance</h3>
+            <h3 className="font-display text-sm font-bold text-ink">
+              {dict.dashboard.performance}
+            </h3>
             {summary.subjects.length === 0 ? (
               <p className="mt-6 text-center text-xs text-muted">
-                Play a round in each subject to fill this in.
+                {dict.dashboard.performanceEmpty}
               </p>
             ) : (
               <MasteryRadar subjects={summary.subjects} />
@@ -178,16 +190,21 @@ export default async function DashboardPage() {
       <section>
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <h2 className="font-display text-xl font-bold text-ink">Mini Games</h2>
+            <h2 className="font-display text-xl font-bold text-ink">
+              {dict.dashboard.miniGames}
+            </h2>
             <p className="mt-0.5 text-sm text-muted">
-              Daily Challenge · {dailyDone} of {subjects.length} subjects done today
+              {t(dict.dashboard.dailySubtitle, {
+                done: dailyDone,
+                total: subjects.length,
+              })}
             </p>
           </div>
           <Link
-            href="/spm-games/play"
+            href={appPath(locale, "/play")}
             className="flex items-center gap-1 font-display text-sm font-semibold text-brand-500"
           >
-            All modes <ArrowRight size={16} strokeWidth={2.4} />
+            {dict.dashboard.allModes} <ArrowRight size={16} strokeWidth={2.4} />
           </Link>
         </div>
 
@@ -196,6 +213,7 @@ export default async function DashboardPage() {
           subjects={subjects}
           completedToday={summary.today.daily_completed}
           mastery={masteryMap}
+          dict={dict}
         />
       </section>
 
@@ -206,28 +224,31 @@ export default async function DashboardPage() {
           <div>
             <h2 className="flex items-center gap-2 font-display text-xl font-bold text-ink">
               <Gift size={20} strokeWidth={2.2} className="text-warning" />
-              What you&apos;re playing for
+              {dict.dashboard.prizesTitle}
             </h2>
             <p className="mt-0.5 text-sm text-muted">
-              RM {formatPoints(prizePool)} across {prizes.length} categories this season.
+              {t(dict.dashboard.prizesSubtitle, {
+                pool: formatPoints(prizePool),
+                count: prizes.length,
+              })}
             </p>
           </div>
           <Link
-            href="/spm-games/prizes"
+            href={appPath(locale, "/prizes")}
             className="flex items-center gap-1 font-display text-sm font-semibold text-brand-500"
           >
-            All prizes <ArrowRight size={16} strokeWidth={2.4} />
+            {dict.dashboard.allPrizes} <ArrowRight size={16} strokeWidth={2.4} />
           </Link>
         </div>
 
         {prizes.length === 0 ? (
           <EmptyState
             icon={<Gift size={24} strokeWidth={2} />}
-            title="Prizes not announced yet"
-            description="Prize details for this season will appear here once confirmed."
+            title={dict.dashboard.prizesEmptyTitle}
+            description={dict.dashboard.prizesEmptyBody}
           />
         ) : (
-          <PrizeShowcase categories={prizes} limit={3} />
+          <PrizeShowcase categories={prizes} limit={3} dict={dict} />
         )}
       </section>
       )}
@@ -237,12 +258,14 @@ export default async function DashboardPage() {
         {flags["competition.leaderboard"] && (
         <section>
           <div className="mb-4 flex items-end justify-between gap-4">
-            <h2 className="font-display text-lg font-bold text-ink">Top of Malaysia</h2>
+            <h2 className="font-display text-lg font-bold text-ink">
+              {dict.dashboard.topOfMalaysia}
+            </h2>
             <Link
-              href="/spm-games/leaderboard/overall"
+              href={appPath(locale, "/leaderboard/overall")}
               className="flex items-center gap-1 font-display text-sm font-semibold text-brand-500"
             >
-              Full ranking <ArrowRight size={16} strokeWidth={2.4} />
+              {dict.dashboard.fullRanking} <ArrowRight size={16} strokeWidth={2.4} />
             </Link>
           </div>
 
@@ -279,7 +302,7 @@ export default async function DashboardPage() {
                   {board.you.rank}
                 </span>
                 <p className="min-w-0 flex-1 truncate font-display text-sm font-semibold text-ink">
-                  You
+                  {dict.dashboard.you}
                 </p>
                 <span className="tnum font-display text-sm font-bold text-ink">
                   {formatPoints(board.you.points)}
@@ -292,7 +315,7 @@ export default async function DashboardPage() {
                 <span className="tnum font-semibold text-ink">
                   {formatPoints(board.points_to_top_100)}
                 </span>{" "}
-                points to reach the Top 100
+                {dict.dashboard.pointsToTop100}
               </p>
             )}
           </div>
@@ -301,13 +324,13 @@ export default async function DashboardPage() {
 
         <section>
           <h2 className="mb-4 font-display text-lg font-bold text-ink">
-            Subject mastery
+            {dict.dashboard.subjectMastery}
           </h2>
           {summary.subjects.length === 0 ? (
             <EmptyState
               icon={<CheckCircle2 size={24} strokeWidth={2} />}
-              title="No subject data yet"
-              description="Play a round in any subject and your mastery starts building here."
+              title={dict.dashboard.masteryEmptyTitle}
+              description={dict.dashboard.masteryEmptyBody}
             />
           ) : (
             <div className="flex flex-col gap-2.5 rounded-xl border border-line bg-white p-4">
@@ -349,10 +372,16 @@ export default async function DashboardPage() {
           <BehaviourInsights
             signals={signals}
             hasPlayed={stats.questions_answered > 0}
+            dict={dict}
           />
         )}
         {flags["content.study_areas"] && (
-          <StudyAreas signals={signals} subjects={summary.subjects} />
+          <StudyAreas
+            signals={signals}
+            subjects={summary.subjects}
+            dict={dict}
+            lang={locale}
+          />
         )}
       </div>
     </div>
@@ -397,4 +426,12 @@ function MiniStat({
       </div>
     </div>
   );
+}
+
+/** Time-of-day greeting in the reader's language. */
+function greetingFor(dict: ReturnType<typeof getDictionary>) {
+  const english = greeting();
+  if (english === "Good morning") return dict.dashboard.goodMorning;
+  if (english === "Good afternoon") return dict.dashboard.goodAfternoon;
+  return dict.dashboard.goodEvening;
 }
