@@ -108,16 +108,29 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && rest !== `/${APP_SEGMENT}/onboarding` && !isPublic) {
+  if (user && !isPublic) {
     const { data: profile } = await supabase
       .from("student_profiles")
       .select("consent_at")
       .eq("student_id", user.id)
       .maybeSingle();
 
-    if (!profile?.consent_at) {
+    const onboarded = Boolean(profile?.consent_at);
+    const onOnboarding = rest === `/${APP_SEGMENT}/onboarding`;
+
+    // Both directions, not just one. Sending an unfinished student to the form
+    // is only half the rule; without the other half a student who has already
+    // completed it stays on it forever, refreshing a page that never moves.
+    if (!onboarded && !onOnboarding) {
       const url = request.nextUrl.clone();
       url.pathname = appPath("/onboarding");
+      return NextResponse.redirect(url);
+    }
+
+    if (onboarded && onOnboarding) {
+      const url = request.nextUrl.clone();
+      url.pathname = appPath();
+      url.search = "";
       return NextResponse.redirect(url);
     }
   }
