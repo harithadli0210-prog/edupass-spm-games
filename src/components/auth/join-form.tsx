@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MailCheck, Mail, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { OtpInput } from "@/components/ui/otp-input";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { normalizePhone } from "@/lib/validation";
 import { appPath, localeFromPath, t, type Dictionary } from "@/lib/i18n";
@@ -101,22 +102,30 @@ export function JoinForm({
     setStep(method === "email" && !emailCodeSupported ? "sent" : "code");
   };
 
-  const verify = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const verifyCode = async (token: string) => {
+    if (busy) return;
     setError(null);
     setBusy(true);
 
     const { error: verifyError } = await supabaseBrowser().auth.verifyOtp(
       method === "phone"
-        ? { phone, token: code, type: "sms" }
-        : { email, token: code, type: "email" },
+        ? { phone, token, type: "sms" }
+        : { email, token, type: "email" },
     );
     setBusy(false);
 
-    if (verifyError) return setError(dict.auth.badCode);
+    if (verifyError) {
+      setCode("");
+      return setError(dict.auth.badCode);
+    }
 
     router.push(next);
     router.refresh();
+  };
+
+  const verify = (event: React.FormEvent) => {
+    event.preventDefault();
+    void verifyCode(code);
   };
 
   /* ---- Step 2a: link sent, nothing to type ------------------------------ */
@@ -186,20 +195,23 @@ export function JoinForm({
           }
           error={error ?? undefined}
         >
-          <Input
-            id="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            placeholder="123456"
+          <OtpInput
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+            onChange={(next) => {
+              setCode(next);
+              if (error) setError(null);
+            }}
+            // Six digits in means there is nothing left to decide, so submit
+            // rather than making the student reach for the button.
+            onComplete={(full) => void verifyCode(full)}
             invalid={Boolean(error)}
+            disabled={busy}
             autoFocus
+            label={dict.auth.verificationCode}
           />
         </Field>
 
-        <Button type="submit" fullWidth loading={busy} disabled={code.length < 4}>
+        <Button type="submit" fullWidth loading={busy} disabled={code.length < 6}>
           {dict.auth.verifyContinue}
         </Button>
 
