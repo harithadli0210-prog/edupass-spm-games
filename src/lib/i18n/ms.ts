@@ -378,6 +378,19 @@ export const ms: Dictionary = {
     ],
   },
 
+  policy: {
+    rules: "Peraturan Pertandingan",
+    privacy: "Notis Privasi",
+    contact: "Ada soalan? E-mel",
+    consentPrefix: "Saya bersetuju dengan",
+    consentRules: "Peraturan Pertandingan",
+    consentAnd: "dan",
+    consentPrivacy: "Notis Privasi",
+    consentSuffix: ", dan EduPass menyimpan butiran saya untuk mengendalikan SPM Games 2026.",
+    draftWarning:
+      "Draf — belum disemak oleh penasihat undang-undang. Jangan terbitkan kepada pelajar dalam keadaan ini.",
+  },
+
   errors: {
     somethingWrong: "Ada masalah berlaku",
     couldNotLoad:

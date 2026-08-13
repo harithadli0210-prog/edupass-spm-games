@@ -367,6 +367,19 @@ export const en = {
     ],
   },
 
+  policy: {
+    rules: "Competition Rules",
+    privacy: "Privacy Notice",
+    contact: "Questions? Email",
+    consentPrefix: "I agree to the",
+    consentRules: "Competition Rules",
+    consentAnd: "and the",
+    consentPrivacy: "Privacy Notice",
+    consentSuffix: ", and to EduPass storing my details to run SPM Games 2026.",
+    draftWarning:
+      "Draft — not yet reviewed by a legal adviser. Do not publish to students in this state.",
+  },
+
   errors: {
     somethingWrong: "Something went wrong",
     couldNotLoad:

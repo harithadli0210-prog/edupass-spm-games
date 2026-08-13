@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
+import Link from "next/link";
 import { appPath, type Dictionary, type Locale } from "@/lib/i18n";
 
 interface Option {
@@ -157,7 +158,17 @@ export function OnboardingForm({
           <input type="checkbox" name="consent" required
                  className="mt-0.5 size-5 shrink-0 accent-[#6846d6]" />
           <span>
-            {dict.onboarding.consent}
+            {dict.policy.consentPrefix}{" "}
+            <Link href={appPath(lang, "/rules")} target="_blank"
+                  className="font-semibold text-brand-500 underline">
+              {dict.policy.consentRules}
+            </Link>{" "}
+            {dict.policy.consentAnd}{" "}
+            <Link href={appPath(lang, "/privacy")} target="_blank"
+                  className="font-semibold text-brand-500 underline">
+              {dict.policy.consentPrivacy}
+            </Link>
+            {dict.policy.consentSuffix}
             {err("consent") && (
               <span className="mt-1 block text-xs font-semibold text-danger-ink">
                 {err("consent")}

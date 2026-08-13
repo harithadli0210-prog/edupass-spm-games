@@ -7,7 +7,9 @@ import {
   Gamepad2,
   Gift,
   LayoutDashboard,
+  FileText,
   LifeBuoy,
+  ShieldCheck,
   Rocket,
   Trophy,
   type LucideIcon,
@@ -52,7 +54,11 @@ export function Sidebar({ dict }: { dict: Dictionary }) {
     },
     {
       title: dict.nav.support,
-      items: [{ path: "/help", label: dict.nav.help, icon: LifeBuoy }],
+      items: [
+        { path: "/help", label: dict.nav.help, icon: LifeBuoy },
+        { path: "/rules", label: dict.policy.rules, icon: FileText },
+        { path: "/privacy", label: dict.policy.privacy, icon: ShieldCheck },
+      ],
     },
   ];
 
