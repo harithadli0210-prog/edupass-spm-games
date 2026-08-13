@@ -1,0 +1,41 @@
+{
+  "$schema": "../schema.md",
+  "subject": "MATH",
+  "source": {
+    "type": "TEACHER_CREATED",
+    "name": "Cikgu Faridah — Form 4 revision set",
+    "year": 2025,
+    "state": null,
+    "rights_cleared": true
+  },
+  "questions": [
+    {
+      "code": "MATH-00101",
+      "topic": "Quadratic Functions and Equations",
+      "form": 4,
+      "type": "MCQ",
+      "difficulty": 35,
+      "stem": "What are the roots of the quadratic equation x² − 7x + 12 = 0?",
+      "options": [
+        { "content": "x = 3 and x = 4", "correct": true },
+        { "content": "x = −3 and x = −4", "correct": false },
+        { "content": "x = 2 and x = 6", "correct": false },
+        { "content": "x = 1 and x = 12", "correct": false }
+      ],
+      "explanation": "Factorise: x² − 7x + 12 = (x − 3)(x − 4). Setting each factor to zero gives x = 3 and x = 4."
+    },
+    {
+      "code": "MATH-00102",
+      "topic": "Consumer Mathematics",
+      "form": 4,
+      "type": "TRUE_FALSE",
+      "difficulty": 20,
+      "stem": "A 20% discount on RM150 gives a selling price of RM120.",
+      "options": [
+        { "content": "True", "correct": true },
+        { "content": "False", "correct": false }
+      ],
+      "explanation": "Discount = 20% × RM150 = RM30. Selling price = RM150 − RM30 = RM120."
+    }
+  ]
+}

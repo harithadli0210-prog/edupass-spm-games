@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   EduPass design tokens
+   ----------------------------------------------------------------------------
+   Extracted verbatim from the existing EduPass marketing site
+   (C:\EduPass\Website\*.html) so SPM Games inherits the brand rather than
+   forking it. Two corrections are applied during extraction:
+
+   1. Radius  — the static site uses 13 ad-hoc values (3,6,10,12,14,15,16,18,
+                20,22,26,40,44px). Collapsed here to 8/12/16/20 + pill.
+   2. Spacing — the static site has no scale. Tailwind's default 4px step
+                already gives us 4 8 12 16 20 24 32 40 48, so we keep it and
+                simply stay on it.
+
+   The site is light-only; SPM Games matches. Tokens are structured so a dark
+   palette can be layered on later without touching component code.
+   ========================================================================== */
+
+@theme {
+  /* ==========================================================================
+     Tokens copied verbatim from the LIVE edupass.my design system
+     (Astro, /_astro/Asas.*.css), where they are named in Malay:
+
+       --jenama-*   brand      --tembaga-*  copper accent
+       --teks*      text       --permukaan  surface
+       --bulat-*    radius     --bayang-*   shadow
+
+     Matching production exactly is what makes the game feel like the same
+     product rather than a bolt-on. Do not "improve" these values here — change
+     them in the Astro site first, then mirror the change across.
+
+     Note: the older local HTML in C:\EduPass\Website uses a blue (#2743e6)
+     that appears nowhere in the live site or the logo. That folder is stale.
+     ========================================================================== */
+
+  /* --- Brand (--jenama-*) ------------------------------------------------ */
+  --color-brand-50: #f1effd;
+  --color-brand-100: #e4e0fb;
+  --color-brand-200: #c9c1f7; /* hairline borders */
+  --color-brand-300: #aba0f1;
+  --color-brand-400: #8a76e6;
+  --color-brand-500: #6846d6; /* ← LOGO PURPLE · PRIMARY */
+  --color-brand-600: #5637b4;
+  --color-brand-700: #442b91;
+  --color-brand-800: #33206d;
+  --color-brand-900: #22154a; /* ← LOGO INDIGO */
+
+  /* --- Copper (--tembaga-*): the site's secondary accent ------------------
+     Kept available for parity with production, but used sparingly here — the
+     game cards already carry the colour load, and copper sits close to the
+     Bahasa Melayu card, so the two should not appear side by side.         */
+  --color-copper-50: #fff4ed;
+  --color-copper-100: #ffe4d3;
+  --color-copper-300: #ffab7a;
+  --color-copper-400: #ff8a4c;
+  --color-copper-500: #f26522;
+  --color-copper-600: #d94d10;
+  --color-copper-700: #b23a0c;
+
+  /* --- Accent: violet, for in-app gradients ------------------------------ */
+  --color-accent-400: #aba0f1;
+  --color-accent-500: #8a76e6;
+
+  /* --- Neutrals (--neutral-*): cool grey, as production defines them ----- */
+  --color-ink: #22154a; /* --teks        */
+  --color-body: #4e566e; /* --teks-kedua  */
+  --color-muted: #6b7490; /* --teks-lemah  */
+  --color-faint: #9aa1b7; /* --neutral-400 */
+  --color-line: #e3e6ee; /* --neutral-200 */
+  --color-line-strong: #cbd0de; /* --neutral-300 */
+  --color-surface: #f8f9fb; /* --neutral-50  */
+  --color-surface-2: #f1effd; /* --permukaan-tenggelam */
+
+  /* --- Semantic: the ONLY functional colours in the system --------------- */
+  --color-success: #0e9f5f;
+  --color-success-ink: #0b7a49;
+  --color-success-bg: #e9fbf1;
+  --color-danger: #ff4d6d;
+  --color-danger-ink: #d6284a;
+  --color-danger-bg: #ffecf0;
+  --color-warning: #f6b400;
+  --color-warning-ink: #a97400;
+  --color-warning-bg: #fff6e0;
+
+  /* --- Difficulty: derived from semantic, NOT new hues ------------------- */
+  --color-easy: #0e9f5f;
+  --color-medium: #f6b400;
+  --color-hard: #ff4d6d;
+
+  /* --- Subject identity --------------------------------------------------
+     Five hues, one per subject, used ONLY on the game cards and their
+     illustrations. Everything else on the page stays on the brand palette,
+     which is what stops the colour reading as confetti.
+
+     Each is paired with a deeper stop for the card gradient. Saturation and
+     lightness are held roughly constant across the five so no single subject
+     shouts louder than the others in the grid.
+
+     None of them is purple: purple is the brand, and a Mathematics card in
+     brand colour would read as a system surface rather than as a subject. The
+     five are spread around the wheel and all avoid ~255deg.                */
+  --color-bm: #e4572e; /* vermilion */
+  --color-bm-deep: #c33d18;
+  --color-english: #ec4899; /* rose */
+  --color-english-deep: #cf2178;
+  --color-math: #2e7bf6; /* blue */
+  --color-math-deep: #145fd8;
+  --color-science: #0fa968; /* emerald */
+  --color-science-deep: #08804e;
+  --color-sejarah: #e0a020; /* gold */
+  --color-sejarah-deep: #bd8006;
+
+  /* --- Radius (--bulat-s / --bulat / --bulat-l) -------------------------- */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 22px;
+  --radius-xl: 26px;
+
+  /* --- Elevation (--bayang-halus / --bayang / --bayang-jenama) ----------- */
+  --shadow-soft: 0 10px 30px #22154a17;
+  --shadow-card: 0 18px 45px #22154a24;
+  --shadow-brand: 0 8px 18px #6846d64d;
+  --shadow-press: inset 0 2px 6px #22154a1f;
+
+  /* --- Type -------------------------------------------------------------- */
+  --font-display: var(--font-poppins), "Segoe UI", system-ui, sans-serif;
+  --font-sans: var(--font-nunito), "Segoe UI", system-ui, sans-serif;
+
+  /* --- Motion ------------------------------------------------------------ */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-white);
+    color: var(--color-body);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Gameplay is thumb-driven; never let a mistap select question text. */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  /* Every digit that sits in a column or ticks upward. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ============================================================================
+   Utilities
+   ========================================================================== */
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Gradient keyword text, lifted from the marketing site's `.kw`. */
+@utility text-gradient {
+  background: linear-gradient(
+    90deg,
+    var(--color-brand-500),
+    var(--color-accent-500)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
