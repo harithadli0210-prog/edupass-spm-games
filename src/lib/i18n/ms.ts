@@ -312,6 +312,13 @@ export const ms: Dictionary = {
     differentNumber: "Guna nombor lain",
     badPhone: "Masukkan nombor telefon bimbit Malaysia, cth. 012-345 6789.",
     badCode: "Kod itu tidak sah. Semak semula dan cuba lagi.",
+    emailLabel: "Alamat e-mel",
+    emailHint: "Kami akan e-mel kod 6 digit kepada anda.",
+    sentToEmail: "Dihantar ke {email}",
+    usePhone: "Guna nombor telefon",
+    useEmail: "Guna e-mel",
+    badEmail: "Masukkan alamat e-mel yang sah.",
+    orDivider: "atau",
   },
 
   onboarding: {

@@ -301,6 +301,13 @@ export const en = {
     differentNumber: "Use a different number",
     badPhone: "Enter a Malaysian mobile number, e.g. 012-345 6789.",
     badCode: "That code didn't work. Check it and try again.",
+    emailLabel: "Email address",
+    emailHint: "We'll email you a 6-digit code.",
+    sentToEmail: "Sent to {email}",
+    usePhone: "Use phone instead",
+    useEmail: "Use email instead",
+    badEmail: "Enter a valid email address.",
+    orDivider: "or",
   },
 
   onboarding: {

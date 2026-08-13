@@ -43,6 +43,17 @@ insert into feature_flags (key, label, description, category, enabled, visible_t
    'Master switch. Off means students can play but nothing is recorded to leaderboards.',
    'COMPETITION', true, true, 13),
 
+  -- ---- Sign-in methods ---------------------------------------------------
+  -- Phone is the better guard against duplicate accounts, but every SMS costs
+  -- money through an external provider. Off until that contract exists.
+  ('auth.phone', 'Sign in by phone (SMS)',
+   'Needs an SMS provider configured in Supabase. Each message is billed.',
+   'COMPETITION', false, true, 5),
+
+  ('auth.email', 'Sign in by email',
+   'No external provider needed. Weaker duplicate-account guard than phone.',
+   'COMPETITION', true, true, 6),
+
   -- ---- Content -----------------------------------------------------------
   ('content.explanations', 'Answer explanations',
    'Shows the explanation after a wrong answer.',

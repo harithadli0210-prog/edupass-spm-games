@@ -3,6 +3,9 @@ import { JoinForm } from "@/components/auth/join-form";
 import { Skeleton } from "@/components/ui/states";
 import { Logo } from "@/components/brand/logo";
 import { getDictionary, isLocale, type Locale } from "@/lib/i18n";
+import { resolveFlags } from "@/lib/flags";
+
+export const dynamic = "force-dynamic";
 
 export default async function JoinPage({
   params,
@@ -11,6 +14,14 @@ export default async function JoinPage({
 }) {
   const { lang } = await params;
   const dict = getDictionary((isLocale(lang) ? lang : "en") as Locale);
+
+  // Phone stays hidden until an SMS provider exists, so a student is never
+  // offered a sign-in route that cannot deliver a code.
+  const flags = await resolveFlags(["auth.phone", "auth.email"]);
+  const enabled = {
+    phone: flags["auth.phone"],
+    email: flags["auth.email"] || !flags["auth.phone"],
+  };
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6 pt-4">
@@ -25,7 +36,7 @@ export default async function JoinPage({
       {/* JoinForm reads the `next` query param, so it needs a boundary to be
           prerenderable. */}
       <Suspense fallback={<Skeleton className="h-[168px] rounded-md" />}>
-        <JoinForm dict={dict} />
+        <JoinForm dict={dict} enabled={enabled} />
       </Suspense>
 
       <p className="text-center text-xs leading-relaxed text-muted">
